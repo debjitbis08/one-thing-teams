@@ -71,3 +71,36 @@ type initiative = {
   assignedTeamId: option<teamId>,
   priority: initiativePriority,
 }
+
+type taskStatus =
+    | Todo
+    | Doing
+    | Stuck
+    | Done
+
+type taskId = TaskId(UUIDv7.t)
+
+type taskData = {
+  taskId: taskId,
+  initiativeId: initiativeId,
+  title: string,
+  description: option<string>,
+  status: taskStatus,
+  startedAt: option<string>,
+  completedAt: option<string>,
+  assignees: RescriptCore.Set.t<organizationMember>
+}
+
+type scenario = {
+    title: string,
+    acceptanceCriteria: array<string>,
+}
+
+type taskKind =
+    | WorkItem
+    | UserStory({ scenarios: array<scenario> })
+
+type task = {
+    data: taskData,
+    kind: taskKind
+}
