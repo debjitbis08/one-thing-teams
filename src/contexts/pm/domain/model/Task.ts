@@ -1,11 +1,12 @@
-import { FibonacciScale } from "@common/domain/FibonacciScale";
+import type { t as FibonacciScale } from "@common/domain/FibonacciScale.gen";
+import { value as fibonacciValue } from "@common/domain/FibonacciScale.gen";
 import { GlobalUniqueId } from "@foundation/domain/GlobalUniqueId";
 import { ErrorTypes } from "@utilities/ErrorTypes";
 import { SystemError } from "@utilities/SystemError";
 import { Either, Left, Right } from "purify-ts/Either";
-import type { InitiativeId } from "./Initiative";
-import type { OrganizationMember } from "./OrganizationMember";
-import type { TeamId } from "./Team";
+import type { initiativeId as InitiativeId } from "./Initiative.gen";
+import type { organizationMember as OrganizationMember } from "./OrganizationMember.gen";
+import type { teamId as TeamId } from "./Team.gen";
 import { TaskStatus } from "./TaskStatus";
 
 const permittedTransitions: Record<TaskStatus, TaskStatus[]> = {
@@ -229,7 +230,7 @@ export class Task {
     }
 
     getPriorityScore(): number {
-        return this.priority.getValue();
+        return fibonacciValue(this.priority);
     }
 
     static sortByPriority(tasks: Task[]): Task[] {

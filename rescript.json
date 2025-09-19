@@ -1,0 +1,31 @@
+{
+  "name": "domain-rescript",
+  "sources": [
+    {
+      "dir": "src/utilities",
+      "subdirs": true
+    },
+    {
+      "dir": "src/contexts/common/domain",
+      "subdirs": true
+    },
+    {
+      "dir": "src/contexts/foundation/domain",
+      "subdirs": true
+    },
+    {
+      "dir": "src/contexts/pm/domain/model",
+      "subdirs": true
+    }
+  ],
+  "package-specs": {
+    "module": "esmodule",
+    "in-source": true
+  },
+  "bs-dependencies": ["@rescript/core"],
+  "bsc-flags": ["-open RescriptCore"],
+  "suffix": ".bs.js",
+  "gentypeconfig": {
+    "language": "ts"
+  }
+}

@@ -22,3 +22,7 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+# ReScript build artefacts
+lib/
+**/*.bs.js
+**/*.bs.mjs
