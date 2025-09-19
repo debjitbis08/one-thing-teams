@@ -9,6 +9,13 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.12.8"
+    "astro": "^5.12.8",
+    "dotenv": "^17.2.2",
+    "pino": "^9.10.0",
+    "purify-ts": "^2.1.2",
+    "ts-custom-error": "^3.3.1",
+    "uuid": "^13.0.0",
+    "znv": "^0.5.0",
+    "zod": "^4.1.9"
   }
 }

@@ -1,0 +1,320 @@
+\documentclass[a4paper]{article}
+\usepackage{enumitem}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{graphicx} % Required for inserting images
+
+
+\title{OneThing for Teams -- Playbook}
+\author{Debjit Biswas}
+\date{17 September 2025}
+
+\begin{document}
+
+\maketitle
+
+\setlength{\parindent}{0pt}
+\setlength\parskip{2ex plus 0.2ex minus 0.4ex}
+
+This document is a practical and opinionated guide for managing focused, outcome-driven product development. It defines a system for how teams should prioritize, execute, and complete work, centered on the belief that focus, clarity, and deliberate scope control are key to delivering real user value.
+
+It serves as a handbook for both leadership and teams to align on how to operate, communicate, and ship successfully, using the ``One Thing at a Time" principle as its core operating rule.
+
+\section{Operating Manual}
+
+\subsection*{The Three Pillars of Launch Success}
+
+\subsubsection*{Initiative Prioritization}
+Choose the most valuable work based on user impact, urgency, risk reduction, and alignment with
+core vision.
+
+\subsubsection*{Initiative Pruning}
+Adapt when reality shifts. Reduce scope intentionally to deliver usable value within constraints.
+
+\subsubsection*{Team Focus}
+Avoid multitasking. Each team owns one initiative, commits fully, and finishes cleanly before moving on.
+
+
+\subsection*{Core Philosophy}
+
+Teams do only one thing at a time. That thing is chosen based on what delays will cost us most. Anyone who’s part of the team, fully or partially, gives it their attention when needed. Otherwise, they rest. That’s fine.
+
+\section{Team Mechanics}
+
+Multitasking is forbidden. Idleness is acceptable.
+
+\begin{itemize}
+    \item Each \textbf{team} works on exactly \textbf{one initiative} at a time.
+    \item A team is assigned to \textbf{only one product} during a cycle.
+    \item A person cannot be part of multiple teams concurrently.
+    \item Teams are \textbf{dynamically formed} based on needs.
+    \item When the initiative is done or abandoned, the team disbands or picks the next initiative.
+\end{itemize}
+
+\subsection*{Communication \& Updates}
+
+\begin{itemize}
+    \item Teams should share \textbf{progress updates} at set intervals (e.g., weekly).
+    \item Updates can include:
+    \begin{itemize}
+        \item Short written notes
+        \item Demo videos
+        \item Links to test/staging/live environments
+    \end{itemize}
+    \item All updates should be shared in the system to ensure visibility.
+    \item Teams are encouraged to have \textbf{face-to-face conversations} (online or offline) to ensure alignment.
+    \item \textbf{Asynchronous communication} is supported and encouraged for preserving deep work and
+individual focus.
+\end{itemize}
+
+\subsection*{Shared Roles}
+
+\begin{itemize}
+    \item People in shared roles (e.g., finance, legal, ops, depending on the initiative) may be assigned to a team.
+    \item If assigned, they must be available on demand.
+    \item Outside of those needs, they may be idle or self-directed.
+\end{itemize}
+
+\subsection*{Team Size}
+
+Research and practice suggest that software teams work best when they consist of \textbf{3 to 7 people}. This size strikes a balance: small enough to minimize coordination overhead, yet large enough to include the skills needed to deliver an initiative end-to-end.
+
+The exact count should reflect only those roles that are truly core to the initiative. Depending on the nature of the work, some functions may not be required day-to-day and can be treated as shared resources outside the team size consideration.
+
+\subsection*{Support Team}
+
+There is always a dedicated support team in every cycle. Its role is to handle bugs and urgent issues so that initiative teams can stay focused.
+
+\begin{itemize}
+    \item  Membership in the support team \textbf{rotates each cycle}, ensuring the responsibility is shared fairly across the organization.
+    \item The support team is \textbf{not a frontline help desk}. They don’t deal directly with every customer complaint or request. Instead, they act as a buffer between customer-facing support staff and initiative teams.
+    \item They work on issues that require changes in the product or codebase, addressing the most critical first.
+    \item If a severe situation arises, other teams may temporarily join in, but support remains the first line of response.
+\end{itemize}
+
+This structure ensures that user-facing support gets timely help without disrupting initiative teams, preserving focus while keeping quality high.
+
+\section{Initiatives}
+
+An \textit{Initiative} is a discrete chunk of work that delivers visible user impact or reduces risk in a meaningful way. An initiative should be scoped such that it can be completed within a single cycle, validated in use, and clearly tied to product value.
+
+\subsection*{Initiative Prioritization}
+
+Initiatives are prioritized based on Cost of Delay (CoD). When possible, use the real CoD expressed in monetary terms. If that cannot be defined, use the following proxies—User Value, Time Criticality, and Risk Reduction, and sum them to create a relative estimate of CoD.
+
+\begin{itemize}
+    \item \textbf{User Value}: How much impact will this have on end users?
+    \item \textbf{Time Criticality}: Will delaying this result in lost opportunity or increased cost?
+    \item \textbf{Risk Reduction}: Does this remove uncertainty or technical/business risk?
+    \item \textbf{Effort}: Can it be completed within reasonable budget?
+    \item \textbf{Is Core}: Is this part of the product's core promise or vision?
+\end{itemize}
+
+\subsection*{Initiative Prioritization Formula}
+
+All initiatives should be ranked to support decision-making, but core initiatives are treated as non-negotiable, they must be executed. However, even core initiatives may vary in urgency and value, so they are still scored for internal ordering.
+
+Use the following formula for ranking initiatives:
+
+\[\text{WSJF\footnotemark} = \dfrac{(\text{User Value} + \text{Time Criticality} + \text{Risk Reduction})}{\text{Effort}}\]
+\footnotetext{Weighted Shortest Job First (WSJF) is a prioritization model used to sequence work for maximum economic benefit. It is based on the idea that the most valuable work is that which delivers the greatest benefit in the shortest possible time. By dividing the combined impact (value, criticality, and risk reduction) by the effort required, WSJF ensures that teams focus on high-impact, low-effort items first.}
+
+\begin{itemize}
+    \item User Value, Time Criticality, Risk Reduction, and Effort are scored on a Fibonacci scale (e.g., 1, 2, 3, 5, 8).
+    \item Core initiatives are always selected, but this score still helps decide \textbf{which core to do first} and how to sequence non-core work.
+    \item Higher scores indicate higher priority.
+\end{itemize}
+
+This formula helps force-rank initiatives based on what delivers the most impact for the least effort, while ensuring core initiatives are not missed.
+
+Only prioritized initiatives are eligible for team assignment.
+
+\subsection*{Initiative Properties}
+
+\begin{itemize}
+    \item Title/Description
+    \item Product
+    \item A \textbf{Time Budget} (max estimates)
+    \item An optional common \textbf{chat room link}
+    \item A \textbf{Progress Status}, one of:
+        Thinking,
+        Trying,
+        Building,
+        Finishing,
+        Deploying,
+        Stuck
+    \item A \textbf{Lifecycle Status}: Waiting, Active, Done, Abandoned, Pruned
+    \item Prioritization Properties (see above)
+    \item Effort Estimate (Fibonacci scale)
+    \item WSJF (automatically calculated)
+    \item Assigned Team (if any)
+    \item Subtasks (optional; each with its own priority)
+\end{itemize}
+
+No team can pick up a new initiative unless their current one is complete, pruned, or officially abandoned.
+
+Initiatives cannot roll over to the next cycle by default. If a initiative cannot be completed within the current cycle, it must either be pruned to deliver something useful, or abandoned and re-prioritized for a future cycle.
+
+The system may assist in pruning by tracking subtasks and their priorities. As time runs out, it can automatically suggest which lower-priority subtasks to drop in order to deliver the most valuable outcome within the remaining budget.
+
+\section{Cycles}
+
+Teams may choose any cycle length that suits their context. The important part is to have a fixed timebox that provides both focus and a natural point to reassess priorities.
+
+This playbook suggests \textbf{six-week cycles}\footnote{\url{https://basecamp.com/shapeup/2.2-chapter-08#six-week-cycles}}, inspired by the approach described in Basecamp's Shape Up methodology. Six weeks was found to be a sweet spot:
+
+
+\begin{itemize}
+    \item \textbf{Long enough} to deliver something meaningful from start to finish.
+    \item \textbf{Short enough} that the end feels visible from the beginning, which encourages trade-offs and avoids drifting.
+\end{itemize}
+
+Avoids the heavy overhead of very short cycles (e.g., two-week sprints) where planning and regrouping consume more time than the actual work accomplished.
+
+After each cycle, a \textbf{two-week break/stabilization period} is recommended for fixing post-release issues, reviewing outcomes, preparing for the next cycle, or simply resting and prototyping.
+
+\section{Bugs}
+
+\begin{itemize}
+    \item All bugs are fixed immediately.
+    \item No bug backlog is maintained.
+    \item If a bug is deemed non-critical, it is ignored.
+\end{itemize}
+
+\subsection*{Who fixes bugs?}
+
+\begin{itemize}
+    \item The support team for the current cycle handles all bugs.
+    \item If multiple critical bugs arise, support team handles them sequentially.
+    \item If the situation is severe, everyone drops everything to fix.
+\end{itemize}
+
+\section{Done = In Use}
+
+An initiative is only marked done when users are using it.
+
+\subsection*{Validation Before Done}
+
+\begin{itemize}
+    \item Before a initiative is marked done, the system should enforce validation:
+    \begin{itemize}
+        \item A URL where the initiative is live
+        \item A tracking event or usage metric
+        \item A screenshot or evidence of deployment
+        \item Manual sign-off by a product/UX lead
+    \end{itemize}
+
+    \item If validation is missing, the system should:
+
+    \begin{itemize}
+        \item Warn that the initiative is not confirmed in use
+        \item Block marking it as done, or mark as pending validation
+        \item Allow manual override, but log who did it and why
+    \end{itemize}
+
+\end{itemize}
+
+\subsection*{No exceptions}
+
+\begin{itemize}
+    \item Merged but unused? Not done.
+    \item Deployed behind a flag? Not done.
+    \item Blocked by lack of communication? Not done.
+\end{itemize}
+
+
+\section{Abandonment \& Pruning}
+
+\subsection*{Abandonment}
+Stopping early is better than wasting effort.
+
+\begin{itemize}
+    \item An initiative can be abandoned if continuing no longer makes sense.
+    \item Abandonment must be a deliberate decision by product leadership.
+    \item Teams may then disband or be reassigned.
+    \item Abandoned initiatives are not considered failures if the decision is made in time.
+\end{itemize}
+
+\subsection*{Pruning}
+
+Pruning is a sign of focus, not failure.
+
+\begin{itemize}
+    \item An initiative can be pruned when it becomes clear it cannot be completed in time.
+    \item  Pruning is the act of deliberately scaling back the scope of the initiative to ensure a partial but meaningful outcome.
+    \item Pruned initiatives are still considered complete if the reduced version is delivered and used.
+    \item Teams and leadership must agree on the pruned version and redefine ``done" accordingly.
+\end{itemize}
+
+\section{Emergencies}
+
+Emergencies are the only valid interruption.
+
+\begin{itemize}
+    \item  If something explodes, we drop everything.
+    \item  Everyone is expected to help fix.
+    \item  Emergencies are rare, but treated seriously.
+\end{itemize}
+
+\section{Cultural Principles}
+
+\begin{itemize}
+    \item Focus is sacred.
+    \item Prioritization is economic, not political.
+    \item Idleness is better than context-switching.
+    \item We optimize for flow, not busyness.
+    \item Bugs are respected by fixing, not tracking.
+    \item Done means impact, not code.
+    \item Abandonment is a strength, not a weakness.
+    \item Pruning is deliberate clarity, not cutting corners.
+    \item Carrying over incomplete work is a silent failure. Decide clearly: prune, abandon, or finish.
+\end{itemize}
+
+\section{Summary Checklist}
+
+\begin{itemize}
+    \item Before Starting a Initiative
+    \begin{enumerate}[label={$\square$}]
+        \item Has it been ranked?
+        \item Do we have a full team with no conflicts?
+        \item Can we finish it within the time budget allocated?
+    \end{enumerate}
+    \item While Working
+    \begin{enumerate}[label={$\square$}]
+        \item Are we ignoring everything else?
+        \item Are bugs being handled by support?
+        \item Are shared members showing up when needed?
+    \end{enumerate}
+    \item Before Marking Done
+    \begin{enumerate}[label={$\square$}]
+        \item Are real users using it?
+        \item Is impact visible?
+        \item Has the system validated deployment through link, metric, or sign-off?
+    \end{enumerate}
+    \item If Considering Abandonment
+    \begin{enumerate}[label={$\square$}]
+        \item Is the initiative still worth pursuing?
+        \item Has the cost of continuing exceeded its value?
+        \item Has leadership confirmed abandonment?
+    \end{enumerate}
+    \item If Considering Pruning
+    \begin{enumerate}[label={$\square$}]
+        \item Is the original initiative now unrealistic within the time budget?
+        \item Can we redefine the scope meaningfully?
+        \item Will the pruned initiative still deliver user value?
+        \item Has leadership signed off on the new definition of done?
+        \item Has the system suggested a subtask pruning strategy based on remaining time?
+    \end{enumerate}
+\end{itemize}
+
+\section{Final Words}
+
+Do one thing. Do it right. Do it until users feel it.
+
+Or stop if it no longer matters.
+
+Or trim it if it still matters, but time has run out.
+
+\end{document}
+
