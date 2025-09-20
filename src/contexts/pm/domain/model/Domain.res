@@ -37,7 +37,6 @@ type lifecycleStatus =
   | Active
   | Done
   | Abandoned
-  | Pruned
 
 type initiativePriority = {
   userValue: FibonacciScale.t,
@@ -65,6 +64,16 @@ type initiative = {
   priority: initiativePriority,
 }
 
+type emergencyId = EmergencyId(UUIDv7.t)
+type emergency = {
+  emergencyId: emergencyId,
+  productId: productId,
+  title: string,
+  description: option<string>,
+  reportedAt: string,
+  resolvedAt: option<string>,
+}
+
 type assignment =
   | Unassigned
   | Support(productId)
@@ -76,6 +85,7 @@ type organizationMember = {
   name: string,
   email: Email.t,
   assignment: assignment,
+  emergency: option<emergencyId>,
 }
 
 type taskStatus =
@@ -83,18 +93,18 @@ type taskStatus =
   | Doing
   | Stuck
   | Done
+  | Pruned
 
 type taskId = TaskId(UUIDv7.t)
 
 type taskData = {
   taskId: taskId,
-  initiativeId: initiativeId,
   title: string,
   description: option<string>,
   status: taskStatus,
   startedAt: option<string>,
   completedAt: option<string>,
-  assignees: RescriptCore.Set.t<organizationMember>,
+  assignees: RescriptCore.Set.t<UserId.userId>,
 }
 
 type scenario = {
@@ -103,21 +113,55 @@ type scenario = {
 }
 
 type taskKind =
-  | WorkItem
-  | UserStory({scenarios: array<scenario>})
+  | InitiativeTask(initiativeId)
+  | UserStory({initiativeId: initiativeId, scenarios: array<scenario>})
+  | Emergency(emergency)
+  | Support(productId)
 
-type task = {
-  data: taskData,
-  kind: taskKind,
-}
+module Task = {
+  type t = {
+    data: taskData,
+    kind: taskKind,
+  }
 
-type emergencyId = EmergencyId(UUIDv7.t)
-type emergency = {
-  emergencyId: emergencyId,
-  productId: productId,
-  title: string,
-  description: option<string>,
-  reportedAt: string,
-  resolvedAt: option<string>,
-  assignees: RescriptCore.Set.t<organizationMember>,
+  let data = t => t.data
+  let kind = t => t.kind
+
+  type assignmentError =
+  | AssignmentMismatch
+  | MemberNotAssigned
+
+  let isCompatible = (~member: organizationMember, ~kind: taskKind) =>
+    switch (member.assignment, kind) {
+    | (Initiative(initiativeId), InitiativeTask(taskInitiativeId))
+    | (Initiative(initiativeId), UserStory({initiativeId: taskInitiativeId, scenarios: _})) =>
+      initiativeId == taskInitiativeId
+    | (Support(productId), Support(taskProductId)) => productId == taskProductId
+    | (Support(_), InitiativeTask(_)) => false
+    | (Support(_), UserStory(_)) => false
+    | (Initiative(_), Support(_)) => false
+    | (_, Emergency(_)) => true
+    | (Unassigned, _) => true
+    }
+
+  let make = (~data, ~kind, ~getMember: UserId.userId => option<organizationMember>, ()) =>
+    /* ensure the provided set contains only compatible ids */
+    switch RescriptCore.Set.toArray(data.assignees)->RescriptCore.Array.every(userId =>
+      switch getMember(userId) {
+      /* you'll need to provide this lookup */
+      | Some(member) => isCompatible(~member, ~kind)
+      | None => false
+      }
+    ) {
+    | true => Belt.Result.Ok({data, kind})
+    | false => Belt.Result.Error(AssignmentMismatch)
+    }
+
+  let assign = (~task, ~member) =>
+    if isCompatible(~member, ~kind=task.kind) {
+      task.data.assignees->RescriptCore.Set.add(member.userId)
+      Belt.Result.Ok(task)
+    } else {
+      Belt.Result.Error(AssignmentMismatch)
+    }
 }

@@ -1,31 +1,6 @@
-open FibonacciScale
+open Domain
 
-@genType
- type t = {
-  userValue: FibonacciScale.t,
-  timeCriticality: FibonacciScale.t,
-  riskReductionOrOpportunityEnablement: FibonacciScale.t,
-  effort: FibonacciScale.t,
-  isCore: bool,
-}
-
-@genType
-let make = (
-  ~userValue,
-  ~timeCriticality,
-  ~riskReductionOrOpportunityEnablement,
-  ~effort,
-  ~isCore,
-  (),
-) => {
-  userValue,
-  timeCriticality,
-  riskReductionOrOpportunityEnablement,
-  effort,
-  isCore,
-}
-
-let wsjfNumerator = priority =>
+let wsjfNumerator = (priority: initiativePriority) =>
   FibonacciScale.value(priority.userValue)
   + FibonacciScale.value(priority.timeCriticality)
   + FibonacciScale.value(priority.riskReductionOrOpportunityEnablement)
@@ -39,14 +14,12 @@ let effortValue = priority => {
   }
 }
 
-@genType
 let calculateWSJF = priority => {
   let numerator = float_of_int(wsjfNumerator(priority))
   let denominator = float_of_int(effortValue(priority))
   numerator /. denominator
 }
 
-@genType
 let compare = (a, b) => {
   if a.isCore && !b.isCore {
     -1

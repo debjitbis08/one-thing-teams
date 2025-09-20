@@ -24,7 +24,7 @@ module Make = (S: Spec) => {
   let unsafeMake = (value: S.raw) =>
     switch make(value) {
     | Belt.Result.Ok(vo) => vo
-    | Belt.Result.Error(err) => Js.Exn.raiseError(S.show(value) ++ " is invalid")
+    | Belt.Result.Error(_) => Js.Exn.raiseError(S.show(value) ++ " is invalid")
     }
 
   let value = (vo: t) => vo
