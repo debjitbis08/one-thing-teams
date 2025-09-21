@@ -23,15 +23,3 @@ let errorMessage = (err: error): string =>
   | #InvalidName(original) => "Organization name is invalid: " ++ original
   | #InvalidShortCode(original) => "Unable to derive shortcode from name: " ++ original
   }
-
-@genType
-type commandJs = command
-
-@genType
-type errorJs = error
-
-@genType
-let executeJs = execute
-
-@genType
-let errorMessageJs = errorMessage
