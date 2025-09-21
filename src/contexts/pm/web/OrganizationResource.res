@@ -38,7 +38,7 @@ let commandOfRequest = ({name, ownerId}: request): CreateOrganization.command =>
 let encodeOrganization = (organization: Organization.t): RescriptCore.JSON.t => {
   let OrganizationId.OrganizationId(uuid) = Organization.id(organization)
   let UserId.UserId(ownerUuid) = Organization.owner(organization)
-  let dict = RescriptCore.Dict.empty()
+  let dict = RescriptCore.Dict.make()
   dict->RescriptCore.Dict.set("id", RescriptCore.JSON.Encode.string(UUIDv7.value(uuid)))
   dict->RescriptCore.Dict.set("name", RescriptCore.JSON.Encode.string(Organization.nameValue(organization)))
   dict->RescriptCore.Dict.set("shortCode", RescriptCore.JSON.Encode.string(Organization.shortCodeValue(organization)))
@@ -47,7 +47,7 @@ let encodeOrganization = (organization: Organization.t): RescriptCore.JSON.t => 
 }
 
 let encodeError = (message: string): RescriptCore.JSON.t => {
-  let dict = RescriptCore.Dict.empty()
+  let dict = RescriptCore.Dict.make()
   dict->RescriptCore.Dict.set("error", RescriptCore.JSON.Encode.string(message))
   RescriptCore.JSON.Encode.object(dict)
 }
