@@ -1,11 +1,11 @@
 type t
 type error = [#InvalidUuid(string) | #NotV7(string)]
 
-let gen: unit => t
-let ofString: string => result<t, error>
-let ofStringUnsafe: string => t
+@genType let gen: unit => t
+@genType let ofString: string => result<t, error>
+@genType let ofStringUnsafe: string => t
 
-let value: t => string
+@genType let value: t => string
 let equal: (t, t) => bool
 
 let encode: t => Js.Json.t

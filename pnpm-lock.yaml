@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@glennsl/rescript-fetch':
+        specifier: ^0.2.3
+        version: 0.2.3
       '@rescript/core':
         specifier: ^1.6.1
         version: 1.6.1(rescript@11.1.4)
@@ -240,6 +243,9 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@glennsl/rescript-fetch@0.2.3':
+    resolution: {integrity: sha512-0MuaXeJHGii0/SKzR4ASB1Wal+ogdnNsD1K6HSTFUVc+TQzAZY+V8Nb7Z8K4OUqMJzmurIgVXNmirx3DC1Huyg==}
 
   '@img/sharp-darwin-arm64@0.33.5':
     resolution: {integrity: sha512-UT4p+iz/2H4twwAoLCqfA9UH5pI6DggwKEGuaPy7nCVQ8ZsiY5PIcrRvD1DzuY3qYL07NtIQcWnBSY/heikIFQ==}
@@ -1719,6 +1725,8 @@ snapshots:
 
   '@esbuild/win32-x64@0.25.8':
     optional: true
+
+  '@glennsl/rescript-fetch@0.2.3': {}
 
   '@img/sharp-darwin-arm64@0.33.5':
     optionalDependencies:

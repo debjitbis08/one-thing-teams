@@ -12,6 +12,7 @@
     "res:watch": "rescript build -w"
   },
   "dependencies": {
+    "@glennsl/rescript-fetch": "^0.2.3",
     "@rescript/core": "^1.6.1",
     "astro": "^5.12.8",
     "dotenv": "^17.2.2",

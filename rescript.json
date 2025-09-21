@@ -6,15 +6,7 @@
       "subdirs": true
     },
     {
-      "dir": "src/contexts/common/domain",
-      "subdirs": true
-    },
-    {
-      "dir": "src/contexts/foundation/domain",
-      "subdirs": true
-    },
-    {
-      "dir": "src/contexts/pm/domain/model",
+      "dir": "src/contexts/",
       "subdirs": true
     }
   ],
@@ -22,7 +14,7 @@
     "module": "esmodule",
     "in-source": true
   },
-  "bs-dependencies": ["@rescript/core"],
+  "bs-dependencies": ["@rescript/core",  "@glennsl/rescript-fetch"],
   "bsc-flags": ["-open RescriptCore"],
   "suffix": ".bs.js",
   "gentypeconfig": {

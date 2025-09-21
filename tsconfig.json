@@ -6,6 +6,7 @@
     "paths": {
       "@utilities/*": ["./src/utilities/*"],
       "@common/*": ["./src/contexts/common/*"],
+      "@id/*": ["./src/contexts/id/*"],
       "@foundation/*": ["./src/contexts/foundation/*"],
     }
   }

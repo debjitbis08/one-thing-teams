@@ -47,6 +47,7 @@ let make = Impl.make
 
 let unsafeMake = Impl.unsafeMake
 
+@genType
 let value = Impl.value
 
 let equal = Impl.equal
