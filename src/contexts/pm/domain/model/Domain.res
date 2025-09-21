@@ -1,8 +1,16 @@
 type organizationId = OrganizationId(UUIDv7.t)
 
+module OrganizationName = ConstrainedString.Make({
+  let minLength = 1
+  let maxLength = None
+  let label = "Organization name"
+})
+
+type organizationName = OrganizationName.t
+
 type organization = {
   organizationId: organizationId,
-  name: string,
+  name: organizationName,
   shortCode: ShortCode.t,
 }
 

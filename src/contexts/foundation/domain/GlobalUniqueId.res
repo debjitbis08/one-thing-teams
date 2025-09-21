@@ -47,10 +47,10 @@ module type S = {
   let equal: (t, t) => bool
   let fromString: string => result<t, error>
   let fromStringUnsafe: string => t
-  let make: (~id: option<string>=?) => t
+  let make: (~id: string=?, unit) => t
 }
 
-module Make = (X: SPEC): S with type t = t<X.tag> => {
+module Make = (X: SPEC): (S with type t = t<X.tag>) => {
   type t = t<X.tag>
   type error = X.error
 
@@ -67,10 +67,12 @@ module Make = (X: SPEC): S with type t = t<X.tag> => {
   let fromStringUnsafe = (s: string): t =>
     switch fromString(s) {
     | Ok(id) => id
-    | Error(e) =>
-        Js.Exn.raiseError("Invalid " ++ X.label ++ ": " ++ switch e { | _ as e => switch e { | #InvalidUserId(orig) => orig | #InvalidInitiativeId(orig) => orig | _ => "" }})
+    | Error(_) => Js.Exn.raiseError("Invalid " ++ X.label ++ ": " ++ s)
     }
 
-  let make = (~id: option<string>=?) =>
-    switch id { | Some(v) => fromStringUnsafe(v) | None => generate() }
+  let make = (~id=?, ()) =>
+    switch id {
+    | Some(v) => fromStringUnsafe(v)
+    | None => generate()
+    }
 }
