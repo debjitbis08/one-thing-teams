@@ -1,46 +1,53 @@
-# Astro Starter Kit: Basics
+# OneThing for Teams
 
-```sh
-pnpm create astro@latest -- --template basics
+**OneThing for Teams** is a collaborative planning tool that helps teams stay aligned on their most important work by practicing the principle: **do one thing at a time, finish it, and only then move on.**
+
+It is designed for product-focused teams who want to maximize impact through clarity, prioritization, and deliberate scope control.
+
+---
+
+## 🚀 Getting Started
+
+```bash
+pnpm install    # Install dependencies
+pnpm dev        # Start the development server
+pnpm build      # Build for production
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+---
 
-## 🚀 Project Structure
+## 📂 Project Highlights
 
-Inside of your Astro project, you'll see the following folders and files:
+* **Domain-driven design**
+  Contexts are organized under `src/contexts` (e.g., foundation, common, product management).
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
-```
+* **Shared utilities**
+  Reusable helpers for logging, errors, and configuration in `src/utilities` and `src/config`.
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+* **API routes**
+  Handlers for team-facing features in `src/pages/api`.
 
-## 🧞 Commands
+---
 
-All commands are run from the root of the project, from a terminal:
+## 📖 Core Philosophy
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
+* **Initiative Prioritization** → Work is ranked by *user value, urgency, risk reduction,* and *effort*.
+* **Initiative Pruning** → Scope is cut intentionally when time runs out to still deliver value.
+* **Team Focus** → Each team owns **one initiative** at a time, commits fully, and finishes cleanly.
 
-## 👀 Want to learn more?
+Idleness is acceptable. Multitasking is not.
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+---
+
+## 🔑 Key Concepts
+
+* **Initiatives** – Discrete chunks of work that deliver visible user impact within one cycle.
+* **Cycles** – Fixed timeboxes (default: six weeks) that enforce focus and natural reassessment.
+* **Done = In Use** – An initiative is *only done* when real users are actually using it.
+* **Emergencies** – The only valid interruption; everything else waits.
+
+---
+
+## 📘 Learn More
+
+For the full operating guide, see the [OneThing for Teams Playbook](docs/OneThing_for_Teams_Playbook.pdf)
