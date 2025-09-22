@@ -1,5 +1,20 @@
 type organizationId = OrganizationId.organizationId
 
+type note = {content: string}
+
+type score = {
+  value: FibonacciScale.t,
+  note: option<note>,
+}
+
+/* Optional "direct revenue" lens as % of baseline mapped to Fibonacci */
+type revenuePctBucket =
+  | Lt1Pct
+  | Pct1to3
+  | Pct3to8
+  | Pct8to20
+  | Gt20
+
 type organizationName = string
 
 type productId = ProductId(UUIDv7.t)
@@ -26,6 +41,7 @@ type progressStatus =
   | Building
   | Finishing
   | Deploying
+  | Distributing
   | Stuck
 
 type lifecycleStatus =
@@ -40,6 +56,28 @@ type initiativePriority = {
   riskReductionOrOpportunityEnablement: FibonacciScale.t,
   effort: FibonacciScale.t,
   isCore: bool,
+}
+
+type initiativeCod =
+    | DirectRevenue({ bucket: revenuePctBucket, note: option<note> })
+    | Proxy({
+        /* VALUE */
+        visionAlignment: score,        /* does this reinforce the core? */
+        frequency: score,              /* daily/weekly/rare usage */
+        retentionPotential: score,     /* will they return? */
+        differentiation: score,        /* pricing power / stand-out */
+
+        /* RISK */
+        complexityImpact: score,       /* inverse: higher = less added complexity */
+        futureLeverage: score,         /* unlocks future options / reduces uncertainty */
+
+        /* CRITICALITY */
+        timeCriticality: score,
+    })
+
+type initiativeScore = {
+    cod: initiativeCod,
+    effort: score
 }
 
 type doneEvidence = option<string>
@@ -57,7 +95,7 @@ type initiative = {
   lifecycleStatus: lifecycleStatus,
   doneEvidence: doneEvidence,
   outcomeNotes: option<string>,
-  priority: initiativePriority,
+  score: initiativeScore,
 }
 
 type emergencyId = EmergencyId(UUIDv7.t)
@@ -124,8 +162,8 @@ module Task = {
   let kind = t => t.kind
 
   type assignmentError =
-  | AssignmentMismatch
-  | MemberNotAssigned
+    | AssignmentMismatch
+    | MemberNotAssigned
 
   let isCompatible = (~member: organizationMember, ~kind: taskKind) =>
     switch (member.assignment, kind) {
