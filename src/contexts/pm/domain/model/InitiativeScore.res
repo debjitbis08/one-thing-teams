@@ -1,4 +1,4 @@
-open Domain
+open PmDomain
 
 let revenueBucketToFib = bucket =>
   switch bucket {
@@ -36,23 +36,5 @@ let effortValue = (score: initiativeScore) => {
     1
   } else {
     value
-  }
-}
-
-let calculateWSJF = priority => {
-  let numerator = float_of_int(wsjfNumerator(priority))
-  let denominator = float_of_int(effortValue(priority))
-  numerator /. denominator
-}
-
-let compare = (a, b) => {
-  let wsjfA = calculateWSJF(a)
-  let wsjfB = calculateWSJF(b)
-  if wsjfA == wsjfB {
-    0
-  } else if wsjfA > wsjfB {
-    -1
-  } else {
-    1
   }
 }

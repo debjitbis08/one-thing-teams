@@ -14,6 +14,7 @@
   "dependencies": {
     "@glennsl/rescript-fetch": "^0.2.3",
     "@rescript/core": "^1.6.1",
+    "argon2": "^0.31.2",
     "astro": "^5.12.8",
     "dotenv": "^17.2.2",
     "pino": "^9.10.0",

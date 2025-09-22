@@ -1,11 +1,11 @@
-open Domain
+open PmDomain
 
 let wsjfNumerator = (priority: initiativePriority) =>
   FibonacciScale.value(priority.userValue)
   + FibonacciScale.value(priority.timeCriticality)
   + FibonacciScale.value(priority.riskReductionOrOpportunityEnablement)
 
-let effortValue = priority => {
+let effortValue = (priority: initiativePriority) => {
   let value = FibonacciScale.value(priority.effort)
   if value == 0 {
     1
