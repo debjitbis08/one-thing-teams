@@ -5,8 +5,6 @@ module Promise = RescriptCore.Promise
 module Fetch = Fetch
 
 module SessionResource = SessionResource
-module LoginWithPasswordApp = LoginWithPassword
-module PasswordHasher = PasswordHasher
 
 let decodeStringField = (dict, key) =>
   switch Dict.get(dict, key) {
@@ -38,8 +36,6 @@ let validateLogin = (req: SessionResource.loginRequest): result<SessionResource.
   }
 }
 
-type dependencies = LoginWithPasswordApp.dependencies
-
 type astroContext = {request: Fetch.Request.t}
 
 type response = {
@@ -57,7 +53,7 @@ let errorResponse = err =>
 
 let unexpectedError = SessionResource.encodeError("Unable to login user")
 
-let post = (deps: dependencies, ctx: astroContext): Promise.t<response> => {
+let post = (ctx: astroContext): Promise.t<response> => {
   let initial = Fetch.Request.json(ctx.request)
   let handled =
     Promise.then(initial, json =>
@@ -68,7 +64,7 @@ let post = (deps: dependencies, ctx: astroContext): Promise.t<response> => {
           | Error(message) => Promise.resolve(makeResponse(~status=400, SessionResource.encodeError(message)))
           | Ok(validRequest) =>
               let command = SessionResource.commandOfLoginRequest(validRequest)
-              LoginWithPasswordApp.execute(deps, command)
+              IdentityWorkflows.Login.execute(command)
               ->Promise.thenResolve(result =>
                   switch result {
                   | Ok(session) => makeResponse(~status=200, SessionResource.encodeUserSession(session))
@@ -81,13 +77,5 @@ let post = (deps: dependencies, ctx: astroContext): Promise.t<response> => {
   Promise.catch(handled, _ => Promise.resolve(makeResponse(~status=500, unexpectedError)))
 }
 
-let defaultDependencies: dependencies = {
-  fetchUser: _identifier => Promise.resolve(None),
-  verifyPassword: (~hash, ~password) => PasswordHasher.verify(~hash, ~password),
-}
-
 @genType
 let postJs = post
-
-@genType
-let defaultDependenciesJs = defaultDependencies

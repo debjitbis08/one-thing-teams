@@ -4,7 +4,7 @@ module String = RescriptCore.String
 module Array = Belt.Array
 
 module D = IdDomain
-module LoginWithPasswordApp = LoginWithPassword
+module LoginWithPassword = LoginWithPassword
 
 type loginRequest = {
   usernameOrEmail: string,
@@ -42,7 +42,7 @@ let encodeError = (message: string): JSON.t => {
   JSON.Encode.object(dict)
 }
 
-let commandOfLoginRequest = (req: loginRequest): LoginWithPasswordApp.command => {
+let commandOfLoginRequest = (req: loginRequest): LoginWithPassword.command => {
   {
     usernameOrEmail: req.usernameOrEmail,
     password: req.password,
