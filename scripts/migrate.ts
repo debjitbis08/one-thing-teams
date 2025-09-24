@@ -33,14 +33,14 @@ const ensureMigrationsTable = async (client: Client) => {
 };
 
 const appliedMigrations = async (client: Client): Promise<Set<string>> => {
-  const result = await client.query(`SELECT name FROM ${MIGRATIONS_TABLE}`);
+  const result = await client.query<{ name: string }>(`SELECT name FROM ${MIGRATIONS_TABLE}`);
   return new Set(result.rows.map(row => row.name));
 };
 
-const runMigration = async (client: Client, name: string, sql: string) => {
+const runMigration = async (client: Client, name: string, sqlText: string) => {
   await client.query("BEGIN");
   try {
-    await client.query(sql);
+    await client.query(sqlText);
     await client.query(`INSERT INTO ${MIGRATIONS_TABLE} (name) VALUES ($1)`, [name]);
     await client.query("COMMIT");
     console.log(`✔ Applied ${name}`);
@@ -51,15 +51,13 @@ const runMigration = async (client: Client, name: string, sql: string) => {
 };
 
 const main = async () => {
-  const connectionString = String(env.DATABASE_URL);
-
   const migrations = await loadMigrations();
   if (migrations.length === 0) {
     console.log("No migration files found.");
-    process.exit(0);
+    return;
   }
 
-  const client = new Client({ connectionString });
+  const client = new Client({ connectionString: String(env.DATABASE_URL) });
   await client.connect();
 
   try {
@@ -81,8 +79,8 @@ const main = async () => {
     }
 
     for (const migration of pending) {
-      const sql = await readFile(migration.path, "utf8");
-      await runMigration(client, migration.name, sql);
+      const sqlText = await readFile(migration.path, "utf8");
+      await runMigration(client, migration.name, sqlText);
     }
 
     console.log("All migrations applied successfully.");
