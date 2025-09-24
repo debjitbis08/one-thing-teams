@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "drizzle-kit": "^0.30.0",
+    "@types/pg": "^8.15.5",
     "gentype": "^4.5.0",
     "rescript": "^11.1.4",
     "tsx": "^4.19.1"

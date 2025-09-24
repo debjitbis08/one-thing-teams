@@ -51,7 +51,7 @@ const runMigration = async (client: Client, name: string, sql: string) => {
 };
 
 const main = async () => {
-  const connectionString = env.DATABASE_URL;
+  const connectionString = String(env.DATABASE_URL);
 
   const migrations = await loadMigrations();
   if (migrations.length === 0) {
