@@ -36,6 +36,41 @@ let encodeUserSession = (session: D.userSession): JSON.t => {
   JSON.Encode.object(dict)
 }
 
+type sessionTokenInput = {
+  userId: string,
+  organizationId: string,
+  roles: array<string>,
+}
+
+type issuedTokens = {
+  sessionToken: string,
+  sessionTokenExpiresAt: string,
+  sessionJwt: string,
+  sessionJwtExpiresAt: string,
+}
+
+let sessionTokenInputOfUserSession = (session: D.userSession): sessionTokenInput => {
+  let UserId.UserId(userUuid) = session.userId
+  let OrganizationId.OrganizationId(orgUuid) = Organization.id(session.organization)
+  {
+    userId: UUIDv7.value(userUuid),
+    organizationId: UUIDv7.value(orgUuid),
+    roles: session.roles,
+  }
+}
+
+let encodeLoginSuccess = (~session: D.userSession, ~tokens: issuedTokens): JSON.t => {
+  let dict = Dict.make()
+  dict->Dict.set("user", encodeUserSession(session))
+  let tokensDict = Dict.make()
+  tokensDict->Dict.set("sessionToken", JSON.Encode.string(tokens.sessionToken))
+  tokensDict->Dict.set("sessionTokenExpiresAt", JSON.Encode.string(tokens.sessionTokenExpiresAt))
+  tokensDict->Dict.set("sessionJwt", JSON.Encode.string(tokens.sessionJwt))
+  tokensDict->Dict.set("sessionJwtExpiresAt", JSON.Encode.string(tokens.sessionJwtExpiresAt))
+  dict->Dict.set("tokens", JSON.Encode.object(tokensDict))
+  JSON.Encode.object(dict)
+}
+
 let encodeError = (message: string): JSON.t => {
   let dict = Dict.make()
   dict->Dict.set("error", JSON.Encode.string(message))

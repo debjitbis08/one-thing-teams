@@ -28,3 +28,14 @@ export const latestSnapshots = pgMaterializedView("latest_snapshots", {
   state: jsonb("state").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
 }).existing();
+
+export const identitySessions = pgTable("identity_sessions", {
+  id: text("id").primaryKey(),
+  userId: uuid("user_id").notNull(),
+  organizationId: uuid("organization_id").notNull(),
+  roles: text("roles").array().notNull(),
+  secretHash: text("secret_hash").notNull(),
+  lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});

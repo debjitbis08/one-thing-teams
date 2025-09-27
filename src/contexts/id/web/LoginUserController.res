@@ -6,6 +6,9 @@ module Fetch = Fetch
 
 module SessionResource = SessionResource
 
+@module("../infrastructure/SessionTokenService")
+external issueSessionTokens: SessionResource.sessionTokenInput => Promise.t<SessionResource.issuedTokens> = "issueSessionTokens"
+
 let decodeStringField = (dict, key) =>
   switch Dict.get(dict, key) {
   | Some(value) => JSON.Decode.string(value)
@@ -65,10 +68,17 @@ let post = (ctx: astroContext): Promise.t<response> => {
           | Ok(validRequest) =>
               let command = SessionResource.commandOfLoginRequest(validRequest)
               IdentityWorkflows.Login.execute(command)
-              ->Promise.thenResolve(result =>
+              ->Promise.then(result =>
                   switch result {
-                  | Ok(session) => makeResponse(~status=200, SessionResource.encodeUserSession(session))
-                  | Error(err) => errorResponse(err)
+                  | Ok(session) =>
+                      let tokenInput = SessionResource.sessionTokenInputOfUserSession(session)
+                      issueSessionTokens(tokenInput)
+                      ->Promise.then(tokens =>
+                          Promise.resolve(
+                            makeResponse(~status=200, SessionResource.encodeLoginSuccess(~session, ~tokens))
+                          )
+                        )
+                  | Error(err) => Promise.resolve(errorResponse(err))
                   }
                 )
           }
