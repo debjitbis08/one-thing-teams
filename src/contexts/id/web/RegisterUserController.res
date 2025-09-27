@@ -117,6 +117,8 @@ let post = (deps: dependencies, ctx: astroContext): Promise.t<response> => {
 
 let defaultDependencies: dependencies = {
   hashPassword: password => PasswordHasher.hash(~password),
+  storeEvents: _event => Promise.resolve(()),
+  storeSnapshot: (_event, _user) => Promise.resolve(()),
 }
 
 @genType

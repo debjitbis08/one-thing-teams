@@ -16,7 +16,7 @@
   },
   "bs-dependencies": ["@rescript/core",  "@glennsl/rescript-fetch"],
   "bsc-flags": ["-open RescriptCore"],
-  "suffix": ".bs.js",
+  "suffix": ".bs.mjs",
   "gentypeconfig": {
     "language": "ts"
   }

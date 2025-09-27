@@ -7,6 +7,7 @@
     "scripts/**/*.ts",
     "src/infrastructure/**/*.ts",
     "src/contexts/foundation/application/**/*.ts",
+    "src/contexts/id/workflows/**/*.ts",
     "drizzle.config.ts"
   ]
 }
