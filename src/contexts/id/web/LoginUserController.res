@@ -141,7 +141,7 @@ let post = (ctx: astroContext): Promise.t<response> => {
       }
   })
   Promise.catch(handled, err => {
-    Console.log2("Login controller unexpected error", err)
+    Logger.error("Login controller unexpected error", ~data=Object.create({ "error": err }))
     Promise.resolve(makeResponse(~status=500, unexpectedError))
   })
 }
