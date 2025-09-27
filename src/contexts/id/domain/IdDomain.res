@@ -72,5 +72,6 @@ type passwordRegistration = {
 type passwordRegistrationError = [
   | #PasswordsDoNotMatch
   | #PasswordTooShort
+  | #PasswordCompromised
   | Organization.error
 ]

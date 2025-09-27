@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "concurrently -k \"pnpm res:watch\" \"astro dev --port 4335\"",
     "build": "pnpm res:build && astro build",
     "preview": "astro preview",
     "astro": "astro",
@@ -11,16 +11,21 @@
     "res:clean": "rescript clean",
     "res:watch": "rescript build -w",
     "db:migrate": "tsx scripts/migrate.ts",
-    "check": "pnpm res:build && tsc -p tsconfig.scripts.json"
+    "check": "pnpm res:build && tsc -p tsconfig.scripts.json",
+    "test:int": "./tests/integration/run.sh"
   },
   "dependencies": {
+    "@astrojs/node": "^9.4.4",
     "@glennsl/rescript-fetch": "^0.2.3",
+    "@node-rs/argon2": "^2.0.2",
+    "@node-rs/argon2-wasm32-wasi": "^2.0.2",
+    "@orangeopensource/hurl": "^7.0.0",
+    "@oslojs/crypto": "^1.0.1",
+    "@oslojs/encoding": "^1.1.0",
     "@rescript/core": "^1.6.1",
-    "argon2": "^0.31.2",
     "astro": "^5.12.8",
     "dotenv": "^17.2.2",
     "drizzle-orm": "^0.44.5",
-    "hurl": "^0.2.7",
     "pg": "^8.12.0",
     "pino": "^9.10.0",
     "purify-ts": "^2.1.2",
@@ -31,6 +36,7 @@
   },
   "devDependencies": {
     "@types/pg": "^8.15.5",
+    "concurrently": "^9.2.1",
     "drizzle-kit": "^0.30.0",
     "gentype": "^4.5.0",
     "rescript": "^11.1.4",

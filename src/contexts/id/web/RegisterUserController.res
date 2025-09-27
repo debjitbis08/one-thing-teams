@@ -1,8 +1,3 @@
-module Dict = RescriptCore.Dict
-module JSON = RescriptCore.JSON
-module String = RescriptCore.String
-module Promise = RescriptCore.Promise
-
 let decodeStringField = (dict, key) =>
   switch Dict.get(dict, key) {
   | Some(value) => JSON.Decode.string(value)
@@ -81,6 +76,7 @@ let errorMessage = (err: RegisterWithPassword.error): string =>
       }
   | #PasswordTooShort => "Password must be at least 8 characters long"
   | #PasswordsDoNotMatch => "Passwords do not match"
+  | #PasswordCompromised => "Password appears in breach datasets"
   | #InvalidName(original) => "Organization name is invalid: " ++ original
   | #InvalidShortCode(original) => "Unable to derive shortcode from name: " ++ original
   }

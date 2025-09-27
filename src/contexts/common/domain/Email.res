@@ -1,8 +1,8 @@
 module Spec = {
   type raw = string
   type error = [#InvalidEmail(string)]
-  let normalize = value => value->Js.String2.trim->Js.String2.toLowerCase
-  let validate = value => RescriptCore.RegExp.test(%re("/^[^\s@]+@[^\s@]+\.[^\s@]+$/"), value)
+  let normalize = value => value->String.trim->String.toLowerCase
+  let validate = value => RegExp.test(%re("/^[^\s@]+@[^\s@]+\.[^\s@]+$/"), value)
   let show = value => value
   let eq = (a, b) => a == b
   let invalidError = value => #InvalidEmail(value)

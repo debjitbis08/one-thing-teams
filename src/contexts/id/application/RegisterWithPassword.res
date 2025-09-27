@@ -131,16 +131,23 @@ let execute = (deps: dependencies, cmd: command): Promise.t<result<D.registeredU
     switch RegisterDomain.preparePasswordRegistration(registration) {
     | Error(domainError) => Promise.resolve(Error((domainError :> error)))
     | Ok(prepared) =>
-        prepared.rawPassword
-        ->deps.hashPassword
-        ->Promise.then(passwordHash =>
-            switch RegisterDomain.registerPreparedUser(~passwordHash, prepared) {
-            | Ok(registeredUser) =>
-                let event = makeRegistrationEvent(registeredUser)
-                deps.storeEvents(event)
-                ->Promise.then(() => deps.storeSnapshot(event, registeredUser))
-                ->Promise.thenResolve(_ => Ok(registeredUser))
-            | Error(domainError) => Promise.resolve(Error((domainError :> error)))
+        PasswordStrength.verifyStrong(prepared.rawPassword)
+        ->Promise.then(strong =>
+            if !strong {
+              Promise.resolve(Error((#PasswordCompromised :> error)))
+            } else {
+              prepared.rawPassword
+              ->deps.hashPassword
+              ->Promise.then(passwordHash =>
+                  switch RegisterDomain.registerPreparedUser(~passwordHash, prepared) {
+                  | Ok(registeredUser) =>
+                      let event = makeRegistrationEvent(registeredUser)
+                      deps.storeEvents(event)
+                      ->Promise.then(() => deps.storeSnapshot(event, registeredUser))
+                      ->Promise.thenResolve(_ => Ok(registeredUser))
+                  | Error(domainError) => Promise.resolve(Error((domainError :> error)))
+                  }
+                )
             }
           )
     }

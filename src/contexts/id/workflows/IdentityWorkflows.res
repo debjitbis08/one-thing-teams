@@ -1,4 +1,3 @@
-module Promise = RescriptCore.Promise
 module D = IdDomain
 
 @module("../infrastructure/UserSnapshotRepository")
