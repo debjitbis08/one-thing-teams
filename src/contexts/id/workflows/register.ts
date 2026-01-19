@@ -4,6 +4,7 @@ import type { dependencies as RegisterDependencies, registrationEvent } from "..
 import { defaultDependenciesJs } from "../web/RegisterUserController.gen";
 import { eventRepository } from "../../../infrastructure/db/EventRepository";
 import { storeRegisteredUserSnapshot } from "../infrastructure/UserSnapshotRepository";
+import { appendOrganizationCreatedEvent } from "../infrastructure/OrganizationEventStore";
 
 const aggregateType = "identity.user" as const;
 const registeredEventType = "identity.user.registered" as const;
@@ -32,6 +33,15 @@ const storeEvents: RegisterDependencies["storeEvents"] = async (event: registrat
       },
     ],
     expectedVersion: event.version - 1,
+  });
+
+  await appendOrganizationCreatedEvent({
+    organizationId: event.defaultOrganization.organizationId,
+    name: event.defaultOrganization.name,
+    shortCode: event.defaultOrganization.shortCode,
+    ownerId: event.user.userId,
+    createdBy: event.user.userId,
+    occurredAt: new Date(event.occurredAt),
   });
 };
 

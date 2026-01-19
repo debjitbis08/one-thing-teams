@@ -41,6 +41,13 @@ export type IssuedSessionTokens = {
   sessionJwtExpiresAt: string;
 };
 
+export type AuthenticatedSession = {
+  sessionId: string;
+  userId: string;
+  organizationId: string;
+  roles: string[];
+};
+
 export async function issueSessionTokens(
   input: IssueSessionTokensInput,
 ): Promise<IssuedSessionTokens> {
@@ -66,6 +73,9 @@ export async function issueSessionTokens(
 
   const sessionJwt = createSessionJwt({
     sessionId,
+    userId: input.userId,
+    organizationId: input.organizationId,
+    roles: input.roles,
     createdAt: now,
     expiresAt: sessionJwtExpiresAt,
   });
@@ -78,9 +88,70 @@ export async function issueSessionTokens(
   };
 }
 
+export function validateSessionJwt(token: string): AuthenticatedSession | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) {
+      return null;
+    }
+
+    const [headerPart, payloadPart, signaturePart] = parts;
+    const data = `${headerPart}.${payloadPart}`;
+    const expectedSignature = base64UrlEncode(
+      crypto.createHmac("sha256", sessionJwtSecret).update(data).digest(),
+    );
+
+    if (!timingSafeEqualBase64(signaturePart, expectedSignature)) {
+      return null;
+    }
+
+    const payloadJson = base64UrlDecode(payloadPart).toString("utf-8");
+    const payload = JSON.parse(payloadJson) as {
+      session?: {
+        id?: string;
+        user_id?: string;
+        organization_id?: string;
+        roles?: unknown;
+        created_at?: number;
+      };
+      iat?: number;
+      exp?: number;
+    };
+
+    if (!payload.session) {
+      return null;
+    }
+
+    const { id, user_id, organization_id, roles } = payload.session;
+    if (!id || !user_id || !organization_id || !Array.isArray(roles)) {
+      return null;
+    }
+
+    if (typeof payload.exp !== "number" || payload.exp * 1000 <= Date.now()) {
+      return null;
+    }
+
+    const normalizedRoles = roles.every(role => typeof role === "string")
+      ? (roles as string[])
+      : null;
+    if (!normalizedRoles) {
+      return null;
+    }
+
+    return {
+      sessionId: id,
+      userId: user_id,
+      organizationId: organization_id,
+      roles: normalizedRoles,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
 export async function validateSessionToken(
   token: string,
-): Promise<{ sessionId: string; userId: string; organizationId: string; roles: string[] } | null> {
+): Promise<AuthenticatedSession | null> {
   const parts = token.split(".");
   if (parts.length !== 2) {
     return null;
@@ -155,13 +226,23 @@ function hashSecret(secret: string): string {
   return crypto.createHash("sha256").update(secret).digest("hex");
 }
 
-function createSessionJwt(params: { sessionId: string; createdAt: Date; expiresAt: Date }): string {
+function createSessionJwt(params: {
+  sessionId: string;
+  userId: string;
+  organizationId: string;
+  roles: string[];
+  createdAt: Date;
+  expiresAt: Date;
+}): string {
   const header = base64UrlEncode(Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })));
   const payload = base64UrlEncode(
     Buffer.from(
       JSON.stringify({
         session: {
           id: params.sessionId,
+          user_id: params.userId,
+          organization_id: params.organizationId,
+          roles: params.roles,
           created_at: Math.floor(params.createdAt.getTime() / 1000),
         },
         iat: Math.floor(params.createdAt.getTime() / 1000),
@@ -182,6 +263,12 @@ function base64UrlEncode(buffer: Buffer): string {
     .replace(/\//g, "_");
 }
 
+function base64UrlDecode(value: string): Buffer {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+  return Buffer.from(padded, "base64");
+}
+
 function timingSafeEqualHex(storedHex: string, providedHex: string): boolean {
   const stored = Buffer.from(storedHex, "hex");
   const provided = Buffer.from(providedHex, "hex");
@@ -189,4 +276,17 @@ function timingSafeEqualHex(storedHex: string, providedHex: string): boolean {
     return false;
   }
   return crypto.timingSafeEqual(stored, provided);
+}
+
+function timingSafeEqualBase64(a: string, b: string): boolean {
+  const bufferA = base64UrlDecode(a);
+  const bufferB = base64UrlDecode(b);
+  if (bufferA.length !== bufferB.length) {
+    return false;
+  }
+  try {
+    return crypto.timingSafeEqual(bufferA, bufferB);
+  } catch (_) {
+    return false;
+  }
 }
