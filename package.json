@@ -36,11 +36,13 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@testcontainers/postgresql": "^11.11.0",
     "@types/pg": "^8.15.5",
     "concurrently": "^9.2.1",
     "drizzle-kit": "^0.30.0",
     "gentype": "^4.5.0",
     "rescript": "^11.1.4",
+    "testcontainers": "^11.11.0",
     "tsx": "^4.19.1",
     "typescript": "^5.6.3"
   }

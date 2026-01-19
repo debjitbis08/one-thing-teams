@@ -2,8 +2,9 @@ import type {
   dependencies,
   RenameOrganization_renameEvent as RenameOrganizationEvent,
 } from "../web/RenameOrganizationController.gen";
-import { appendOrganizationRenamedEvent } from "../../id/infrastructure/OrganizationEventStore";
-import { loadOrganizationAggregate } from "../../id/infrastructure/OrganizationAggregateLoader";
+import { appendOrganizationRenamedEvent } from "./OrganizationEventStore";
+import { loadOrganizationAggregate } from "./OrganizationAggregateLoader";
+import { updateOrganizationInUserSnapshots } from "./UserSnapshotRepository";
 
 const appendRenameEvent = async (event: RenameOrganizationEvent) => {
   const occurredAt = new Date(event.occurredAt);
@@ -18,6 +19,21 @@ const appendRenameEvent = async (event: RenameOrganizationEvent) => {
     expectedVersion: event.expectedVersion,
     occurredAt,
   });
+
+  // Update user snapshots that reference this organization
+  // This is a materialized view pattern: user snapshots contain denormalized
+  // organization data for performance. When organizations change, we update
+  // all affected user snapshots to maintain consistency.
+  try {
+    await updateOrganizationInUserSnapshots(
+      event.organizationId,
+      event.name,
+      event.shortCode,
+    );
+  } catch (error) {
+    console.error("Failed to update user snapshots after organization rename:", error);
+    // Log but don't fail - the rename event is already persisted
+  }
 };
 
 export const renameOrganizationDependencies: dependencies = {

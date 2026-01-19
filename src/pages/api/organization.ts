@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
-import { postJs } from "../../contexts/pm/web/OrganizationHandler.gen";
-import { patchJs } from "../../contexts/pm/web/RenameOrganizationController.gen";
-import { renameOrganizationDependencies } from "../../contexts/pm/infrastructure/RenameOrganizationBridge";
+import { postJs } from "../../contexts/id/web/OrganizationHandler.gen";
+import { patchJs } from "../../contexts/id/web/RenameOrganizationController.gen";
+import { renameOrganizationDependencies } from "../../contexts/id/infrastructure/RenameOrganizationBridge";
 
 export const prerender = false;
 
