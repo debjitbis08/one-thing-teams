@@ -125,7 +125,9 @@ let post = (ctx: astroContext): Promise.t<response> => {
                 ->Promise.then(result => {
                     switch result {
                     | Ok(session) =>
-                        let tokenInput = SessionResource.sessionTokenInputOfUserSession(session)
+                        let headers = Fetch.Request.headers(ctx.request)
+                        let userAgent = headerValue(headers, "user-agent")
+                        let tokenInput = SessionResource.sessionTokenInputOfUserSession(session, ~ipAddress=Some(ip), ~userAgent)
                         Js.log2("Issuing session tokens for", tokenInput)
                         issueSessionTokens(tokenInput)
                         ->Promise.then(tokens => {

@@ -40,6 +40,8 @@ type sessionTokenInput = {
   userId: string,
   organizationId: string,
   roles: array<string>,
+  ipAddress: option<string>,
+  userAgent: option<string>,
 }
 
 type issuedTokens = {
@@ -49,13 +51,19 @@ type issuedTokens = {
   sessionJwtExpiresAt: string,
 }
 
-let sessionTokenInputOfUserSession = (session: D.userSession): sessionTokenInput => {
+let sessionTokenInputOfUserSession = (
+  session: D.userSession,
+  ~ipAddress: option<string>,
+  ~userAgent: option<string>,
+): sessionTokenInput => {
   let UserId.UserId(userUuid) = session.userId
   let OrganizationId.OrganizationId(orgUuid) = Organization.id(session.organization)
   {
     userId: UUIDv7.value(userUuid),
     organizationId: UUIDv7.value(orgUuid),
     roles: session.roles,
+    ipAddress,
+    userAgent,
   }
 }
 

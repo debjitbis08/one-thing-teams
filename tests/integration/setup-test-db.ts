@@ -1,32 +1,9 @@
 #!/usr/bin/env node
 
 import { PostgreSqlContainer } from "@testcontainers/postgresql";
-import { Client } from "pg";
-import { readFile, readdir } from "node:fs/promises";
-import { join } from "node:path";
-
-const MIGRATIONS_DIR = join(process.cwd(), "db/migrations");
-
-async function loadMigrations() {
-  const entries = await readdir(MIGRATIONS_DIR);
-  return entries
-    .filter((name) => name.endsWith(".sql"))
-    .sort()
-    .map((name) => ({ name, path: join(MIGRATIONS_DIR, name) }));
-}
-
-async function applyMigrations(client: Client, migrations: Array<{ name: string; path: string }>) {
-  for (const migration of migrations) {
-    const sqlText = await readFile(migration.path, "utf8");
-    try {
-      await client.query(sqlText);
-      console.log(`  ✓ Applied ${migration.name}`);
-    } catch (error) {
-      console.error(`  ✗ Failed to apply ${migration.name}:`, error);
-      throw error;
-    }
-  }
-}
+import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 
 async function main() {
   try {
@@ -40,15 +17,14 @@ async function main() {
     console.log(`✓ Container started`);
 
     console.log("Running migrations...");
-    const client = new Client({ connectionString });
-    await client.connect();
+    const pool = new Pool({ connectionString });
+    const db = drizzle(pool);
 
     try {
-      const migrations = await loadMigrations();
-      await applyMigrations(client, migrations);
-      console.log(`✓ Applied ${migrations.length} migrations`);
+      await migrate(db, { migrationsFolder: "./drizzle" });
+      console.log(`✓ Migrations applied`);
     } finally {
-      await client.end();
+      await pool.end();
     }
 
     // Output the connection string for the shell script to capture

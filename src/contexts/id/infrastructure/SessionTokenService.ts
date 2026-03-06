@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { eq, lt } from "drizzle-orm";
+import { and, eq, lt, ne } from "drizzle-orm";
 
 import { env } from "../../../config/env";
 import { identitySessions } from "../../../infrastructure/db/schema";
@@ -32,6 +32,8 @@ export type IssueSessionTokensInput = {
   userId: string;
   organizationId: string;
   roles: string[];
+  ipAddress?: string;
+  userAgent?: string;
 };
 
 export type IssuedSessionTokens = {
@@ -66,6 +68,8 @@ export async function issueSessionTokens(
     organizationId: input.organizationId,
     roles: input.roles,
     secretHash,
+    ipAddress: input.ipAddress ?? null,
+    userAgent: input.userAgent ?? null,
     lastVerifiedAt: now,
     createdAt: now,
     expiresAt: sessionTokenExpiresAt,
@@ -205,6 +209,53 @@ export async function cleanupExpiredSessions(): Promise<number> {
   const result = await sessionDb
     .delete(identitySessions)
     .where(lt(identitySessions.expiresAt, new Date()))
+    .returning({ id: identitySessions.id });
+  return result.length;
+}
+
+export type SessionInfo = {
+  id: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: Date;
+  lastVerifiedAt: Date;
+  expiresAt: Date;
+  current: boolean;
+};
+
+export async function getSessionsByUserId(
+  userId: string,
+  currentSessionId: string,
+): Promise<SessionInfo[]> {
+  const rows = await sessionDb
+    .select({
+      id: identitySessions.id,
+      ipAddress: identitySessions.ipAddress,
+      userAgent: identitySessions.userAgent,
+      createdAt: identitySessions.createdAt,
+      lastVerifiedAt: identitySessions.lastVerifiedAt,
+      expiresAt: identitySessions.expiresAt,
+    })
+    .from(identitySessions)
+    .where(eq(identitySessions.userId, userId));
+
+  return rows.map(row => ({
+    ...row,
+    current: row.id === currentSessionId,
+  }));
+}
+
+export async function deleteAllUserSessions(
+  userId: string,
+  exceptSessionId?: string,
+): Promise<number> {
+  const conditions = [eq(identitySessions.userId, userId)];
+  if (exceptSessionId) {
+    conditions.push(ne(identitySessions.id, exceptSessionId));
+  }
+  const result = await sessionDb
+    .delete(identitySessions)
+    .where(and(...conditions))
     .returning({ id: identitySessions.id });
   return result.length;
 }
