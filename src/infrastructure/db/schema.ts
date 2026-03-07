@@ -28,7 +28,6 @@ export const events = pgTable(
   t => [
     unique().on(t.aggregateId, t.version),
     index("idx_events_org").on(t.orgId),
-    index("idx_events_created").on(t.createdAt),
     index("idx_events_agg_type").on(t.aggregateType, t.aggregateId),
   ],
 );
@@ -43,7 +42,10 @@ export const snapshots = pgTable(
     state: jsonb("state").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  t => [primaryKey({ columns: [t.aggregateId, t.version] })],
+  t => [
+    primaryKey({ columns: [t.aggregateId, t.version] }),
+    index("idx_snapshots_org").on(t.orgId),
+  ],
 );
 
 export const latestSnapshots = pgMaterializedView("latest_snapshots", {
