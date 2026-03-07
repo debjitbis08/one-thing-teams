@@ -1,7 +1,8 @@
-import { sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
 import { eventRepository } from "../../../infrastructure/db/EventRepository";
 import { db } from "../../../infrastructure/db/client";
+import { events } from "../../../infrastructure/db/schema";
 
 const aggregateType = "identity.invitation" as const;
 
@@ -15,11 +16,11 @@ type AggregateData = {
 };
 
 export async function loadInvitationAggregate(invitationId: string): Promise<AggregateData | undefined> {
-  const events = await eventRepository.loadStream({
+  const loaded = await eventRepository.loadStream({
     aggregateId: invitationId,
   });
 
-  const relevantEvents = events
+  const relevantEvents = loaded
     .filter(event => event.aggregateType === aggregateType)
     .map(event => ({
       version: event.version,
@@ -40,17 +41,19 @@ export async function loadInvitationAggregate(invitationId: string): Promise<Agg
 }
 
 export async function findInvitationIdByTokenHash(tokenHash: string): Promise<string | undefined> {
-  const result = await db.execute(sql`
-    SELECT aggregate_id
-    FROM "events"
-    WHERE aggregate_type = ${aggregateType}
-      AND type = 'identity.invitation.created'
-      AND data->>'tokenHash' = ${tokenHash}
-    LIMIT 1
-  `);
+  const [row] = await db
+    .select({ aggregateId: events.aggregateId })
+    .from(events)
+    .where(
+      and(
+        eq(events.aggregateType, aggregateType),
+        eq(events.type, "identity.invitation.created"),
+        sql`${events.data}->>'tokenHash' = ${tokenHash}`,
+      ),
+    )
+    .limit(1);
 
-  const row = result.rows[0] as { aggregate_id: string } | undefined;
-  return row?.aggregate_id;
+  return row?.aggregateId;
 }
 
 type PendingInvitation = {
@@ -64,48 +67,48 @@ type PendingInvitation = {
 export async function listPendingInvitations(organizationId: string): Promise<PendingInvitation[]> {
   const now = Date.now();
 
-  // Load all created events for this org, then filter by checking full aggregate state
-  const result = await db.execute(sql`
-    SELECT aggregate_id, data, created_at
-    FROM "events"
-    WHERE aggregate_type = ${aggregateType}
-      AND type = 'identity.invitation.created'
-      AND org_id = ${organizationId}
-    ORDER BY created_at DESC
-  `);
+  const candidates = await db
+    .select({
+      aggregateId: events.aggregateId,
+      data: events.data,
+      createdAt: events.createdAt,
+    })
+    .from(events)
+    .where(
+      and(
+        eq(events.aggregateType, aggregateType),
+        eq(events.type, "identity.invitation.created"),
+        eq(events.orgId, organizationId),
+      ),
+    )
+    .orderBy(desc(events.createdAt));
 
-  const candidates = result.rows as Array<{
-    aggregate_id: string;
-    data: { email: string; role: string; expiresAt: number };
-    created_at: string | Date;
-  }>;
-
-  // Filter out expired, accepted, and revoked invitations
   const pending: PendingInvitation[] = [];
 
   for (const candidate of candidates) {
-    if (candidate.data.expiresAt < now) continue;
+    const data = candidate.data as { email: string; role: string; expiresAt: number };
+    if (data.expiresAt < now) continue;
 
     // Check if there's an accepted or revoked event for this aggregate
-    const statusResult = await db.execute(sql`
-      SELECT type FROM "events"
-      WHERE aggregate_id = ${candidate.aggregate_id}
-        AND aggregate_type = ${aggregateType}
-        AND type IN ('identity.invitation.accepted', 'identity.invitation.revoked')
-      LIMIT 1
-    `);
+    const [terminal] = await db
+      .select({ type: events.type })
+      .from(events)
+      .where(
+        and(
+          eq(events.aggregateId, candidate.aggregateId),
+          eq(events.aggregateType, aggregateType),
+          inArray(events.type, ["identity.invitation.accepted", "identity.invitation.revoked"]),
+        ),
+      )
+      .limit(1);
 
-    if (statusResult.rows.length === 0) {
-      const createdAt = candidate.created_at instanceof Date
-        ? candidate.created_at.toISOString()
-        : String(candidate.created_at);
-
+    if (!terminal) {
       pending.push({
-        invitationId: candidate.aggregate_id,
-        email: candidate.data.email,
-        role: candidate.data.role,
-        createdAt,
-        expiresAt: candidate.data.expiresAt,
+        invitationId: candidate.aggregateId,
+        email: data.email,
+        role: data.role,
+        createdAt: candidate.createdAt.toISOString(),
+        expiresAt: data.expiresAt,
       });
     }
   }

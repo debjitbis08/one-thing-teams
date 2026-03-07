@@ -1,4 +1,5 @@
-import { sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
+import { v7 as uuidv7 } from "uuid";
 
 import type {
   dependencies as Dependencies,
@@ -9,43 +10,49 @@ import { appendInvitationAcceptedEvent } from "./InvitationEventStore";
 import { loadInvitationAggregate, findInvitationIdByTokenHash } from "./InvitationAggregateLoader";
 import { hashInvitationToken } from "./InvitationTokenService";
 import { db } from "../../../infrastructure/db/client";
+import { events as eventsTable, snapshots } from "../../../infrastructure/db/schema";
 import { eventRepository } from "../../../infrastructure/db/EventRepository";
 import type { snapshot as RegisteredUserSnapshot } from "../application/RegisteredUserSnapshot.gen";
 
-const getUserEmail = async (userId: string): Promise<string | undefined> => {
-  const result = await db.execute(sql`
-    SELECT state->'user'->>'email' as email
-    FROM "snapshots"
-    WHERE aggregate_type = 'identity.user'
-      AND aggregate_id = ${userId}
-    ORDER BY version DESC
-    LIMIT 1
-  `);
+const userAggregateType = "identity.user" as const;
 
-  const row = result.rows[0] as { email: string } | undefined;
-  return row?.email;
+const getUserEmail = async (userId: string): Promise<string | undefined> => {
+  const [row] = await db
+    .select({ email: sql<string>`${snapshots.state}->'user'->>'email'` })
+    .from(snapshots)
+    .where(
+      and(
+        eq(snapshots.aggregateType, userAggregateType),
+        eq(snapshots.aggregateId, userId),
+      ),
+    )
+    .orderBy(desc(snapshots.version))
+    .limit(1);
+
+  return row?.email ?? undefined;
 };
 
 const addMembershipToUser = async (membership: MembershipAddition): Promise<void> => {
-  // Load the user's latest snapshot
-  const result = await db.execute(sql`
-    SELECT aggregate_id, version, state
-    FROM "snapshots"
-    WHERE aggregate_type = 'identity.user'
-      AND aggregate_id = ${membership.userId}
-    ORDER BY version DESC
-    LIMIT 1
-  `);
-
-  const row = result.rows[0] as {
-    aggregate_id: string;
-    version: number;
-    state: RegisteredUserSnapshot;
-  } | undefined;
+  const [row] = await db
+    .select({
+      aggregateId: snapshots.aggregateId,
+      orgId: snapshots.orgId,
+      version: snapshots.version,
+      state: snapshots.state,
+    })
+    .from(snapshots)
+    .where(
+      and(
+        eq(snapshots.aggregateType, userAggregateType),
+        eq(snapshots.aggregateId, membership.userId),
+      ),
+    )
+    .orderBy(desc(snapshots.version))
+    .limit(1);
 
   if (!row) return;
 
-  const snapshot = row.state;
+  const snapshot = row.state as RegisteredUserSnapshot;
 
   // Check if membership already exists
   const alreadyMember = snapshot.memberships.some(
@@ -53,6 +60,41 @@ const addMembershipToUser = async (membership: MembershipAddition): Promise<void
   );
   if (alreadyMember) return;
 
+  const now = new Date();
+  const newVersion = row.version + 1;
+
+  // Load current event version for the user aggregate
+  const [latestEvent] = await db
+    .select({ version: eventsTable.version })
+    .from(eventsTable)
+    .where(eq(eventsTable.aggregateId, membership.userId))
+    .orderBy(desc(eventsTable.version))
+    .limit(1);
+  const currentEventVersion = latestEvent?.version ?? 0;
+
+  // Append membership_added event to user aggregate
+  await eventRepository.append({
+    events: [
+      {
+        id: uuidv7(),
+        orgId: row.orgId,
+        aggregateId: membership.userId,
+        aggregateType: userAggregateType,
+        version: currentEventVersion + 1,
+        type: "identity.user.membership_added",
+        data: {
+          organizationId: membership.organizationId,
+          organizationName: membership.organizationName,
+          role: membership.role,
+        },
+        meta: {},
+        createdAt: now,
+      },
+    ],
+    expectedVersion: currentEventVersion,
+  });
+
+  // Update snapshot to reflect the new membership
   const updatedSnapshot: RegisteredUserSnapshot = {
     ...snapshot,
     memberships: [
@@ -67,15 +109,16 @@ const addMembershipToUser = async (membership: MembershipAddition): Promise<void
         role: membership.role,
       },
     ],
-    updatedAt: Date.now(),
+    updatedAt: now.getTime(),
   };
 
   await eventRepository.persistSnapshot({
-    aggregateId: row.aggregate_id,
-    aggregateType: "identity.user",
-    version: row.version + 1,
+    aggregateId: row.aggregateId,
+    aggregateType: userAggregateType,
+    orgId: row.orgId,
+    version: newVersion,
     state: JSON.parse(JSON.stringify(updatedSnapshot)),
-    createdAt: new Date(),
+    createdAt: now,
   });
 };
 

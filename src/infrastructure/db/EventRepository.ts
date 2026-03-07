@@ -27,6 +27,7 @@ const mapEvent = (row: typeof eventsTable.$inferSelect): StoredEvent => ({
 const mapSnapshot = (row: typeof snapshotsTable.$inferSelect): StoredSnapshot => ({
   aggregateId: row.aggregateId,
   aggregateType: row.aggregateType,
+  orgId: row.orgId,
   version: row.version,
   state: row.state as StoredSnapshot["state"],
   createdAt: row.createdAt,
@@ -47,6 +48,7 @@ const prepareEventValues = (event: NewEvent): typeof eventsTable.$inferInsert =>
 const prepareSnapshotValues = (snapshot: NewSnapshot): typeof snapshotsTable.$inferInsert => ({
   aggregateId: snapshot.aggregateId,
   aggregateType: snapshot.aggregateType,
+  orgId: snapshot.orgId,
   version: snapshot.version,
   state: snapshot.state,
   createdAt: snapshot.createdAt ?? new Date(),
@@ -121,6 +123,7 @@ export const eventRepository: EventRepository = {
         target: [snapshotsTable.aggregateId, snapshotsTable.version],
         set: {
           state: snapshot.state,
+          orgId: snapshot.orgId,
           createdAt: snapshot.createdAt ?? new Date(),
         },
       });

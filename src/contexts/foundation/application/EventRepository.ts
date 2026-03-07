@@ -25,6 +25,7 @@ export type NewEvent = Omit<StoredEvent, "createdAt"> & {
 export type StoredSnapshot = {
   aggregateId: string;
   aggregateType: string;
+  orgId: string;
   version: number;
   state: JsonValue;
   createdAt: Date;

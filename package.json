@@ -19,6 +19,7 @@
     "db:setup": "pnpm db:start && pnpm db:migrate && pnpm db:seed",
     "db:reset": "pnpm db:wipe && pnpm db:setup",
     "check": "pnpm res:build && tsc -p tsconfig.scripts.json",
+    "test:unit": "pnpm res:build && node --test tests/unit/**/*.bs.mjs",
     "test:int": "./tests/integration/run.sh"
   },
   "dependencies": {

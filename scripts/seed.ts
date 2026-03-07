@@ -52,6 +52,7 @@ const main = async () => {
   const userSnapshot = {
     aggregateId: userId,
     aggregateType: "user",
+    orgId,
     version: 1,
     state: {
       userId,

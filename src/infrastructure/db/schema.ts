@@ -4,6 +4,7 @@ import {
   jsonb,
   pgMaterializedView,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
@@ -26,10 +27,9 @@ export const events = pgTable(
   },
   t => [
     unique().on(t.aggregateId, t.version),
-    index("idx_events_agg").on(t.aggregateId, t.version),
     index("idx_events_org").on(t.orgId),
     index("idx_events_created").on(t.createdAt),
-    index("idx_events_agg_type").on(t.aggregateType),
+    index("idx_events_agg_type").on(t.aggregateType, t.aggregateId),
   ],
 );
 
@@ -38,11 +38,12 @@ export const snapshots = pgTable(
   {
     aggregateId: uuid("aggregate_id").notNull(),
     aggregateType: text("aggregate_type").notNull(),
+    orgId: uuid("org_id").notNull(),
     version: integer("version").notNull(),
     state: jsonb("state").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  t => [unique().on(t.aggregateId, t.version)],
+  t => [primaryKey({ columns: [t.aggregateId, t.version] })],
 );
 
 export const latestSnapshots = pgMaterializedView("latest_snapshots", {

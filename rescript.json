@@ -8,6 +8,11 @@
     {
       "dir": "src/contexts/",
       "subdirs": true
+    },
+    {
+      "dir": "tests/unit",
+      "subdirs": true,
+      "type": "dev"
     }
   ],
   "package-specs": {
