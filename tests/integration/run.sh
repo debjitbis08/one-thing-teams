@@ -14,8 +14,10 @@ if [[ -f .env ]]; then
   set +a
 fi
 
-BASE_URL=${BASE_URL:-http://localhost:4335}
 USE_TESTCONTAINERS=${USE_TESTCONTAINERS:-1}
+START_SERVER=${START_SERVER:-1}
+SERVER_PORT=${SERVER_PORT:-4335}
+BASE_URL=${BASE_URL:-http://localhost:$SERVER_PORT}
 
 # Check prerequisites
 if ! command -v hurl &> /dev/null; then
@@ -36,11 +38,18 @@ EMAIL="test_${UNIQUE}@example.com"
 USERNAME="test_${UNIQUE}"
 PASSWORD="Str0ngP@ssw0rd!${RANDOM}"
 
-# Container management
+# Process management
 CONTAINER_SETUP_PID=""
 CONTAINER_ID=""
+SERVER_PID=""
 
 cleanup() {
+  if [[ -n "$SERVER_PID" ]]; then
+    printf "\nStopping app server (PID %s)...\n" "$SERVER_PID"
+    kill $SERVER_PID 2>/dev/null || true
+    wait $SERVER_PID 2>/dev/null || true
+  fi
+
   if [[ -n "$CONTAINER_SETUP_PID" ]]; then
     kill $CONTAINER_SETUP_PID 2>/dev/null || true
     wait $CONTAINER_SETUP_PID 2>/dev/null || true
@@ -51,6 +60,8 @@ cleanup() {
     docker stop "$CONTAINER_ID" >/dev/null 2>&1 || true
     docker rm "$CONTAINER_ID" >/dev/null 2>&1 || true
   fi
+
+  rm -f /tmp/test-server-$$.log
 }
 
 trap cleanup EXIT
@@ -114,16 +125,53 @@ else
   [[ "$VERBOSE" == "1" ]] && printf "  Database URL: %s\n" "$DATABASE_URL"
 fi
 
-# Check if server is running
-if ! curl -s "$BASE_URL" > /dev/null 2>&1; then
-  echo "Error: Application server is not running at $BASE_URL" >&2
-  echo "Please start the server first:" >&2
-  echo "  npm run dev" >&2
-  echo "" >&2
-  echo "Or set BASE_URL to point to a running server" >&2
-  exit 1
+# Start or check app server
+if [[ "$START_SERVER" == "1" ]]; then
+  printf "Starting app server on port %s...\n" "$SERVER_PORT"
+
+  # Ensure SESSION_JWT_SECRET is set for the test server
+  export SESSION_JWT_SECRET="${SESSION_JWT_SECRET:-integration-test-jwt-secret-that-is-at-least-32-bytes-long}"
+
+  # Start Astro dev server in background
+  npx astro dev --port "$SERVER_PORT" > /tmp/test-server-$$.log 2>&1 &
+  SERVER_PID=$!
+
+  # Wait for server to be ready
+  printf "Waiting for server"
+  for i in {1..60}; do
+    if curl -s "http://localhost:$SERVER_PORT" > /dev/null 2>&1; then
+      printf " done\n"
+      break
+    fi
+    if ! kill -0 $SERVER_PID 2>/dev/null; then
+      printf " failed\n"
+      echo "App server process died unexpectedly:" >&2
+      cat /tmp/test-server-$$.log >&2
+      exit 1
+    fi
+    printf "."
+    sleep 1
+    if [[ $i -eq 60 ]]; then
+      printf " timeout\n"
+      echo "App server failed to start within 60 seconds" >&2
+      cat /tmp/test-server-$$.log >&2
+      exit 1
+    fi
+  done
+
+  printf "✓ App server started (PID %s)\n" "$SERVER_PID"
+else
+  # Check if an external server is running
+  if ! curl -s "$BASE_URL" > /dev/null 2>&1; then
+    echo "Error: Application server is not running at $BASE_URL" >&2
+    echo "Please start the server first:" >&2
+    echo "  npm run dev" >&2
+    echo "" >&2
+    echo "Or set START_SERVER=1 to auto-start the server" >&2
+    exit 1
+  fi
+  printf "✓ Application server is running\n"
 fi
-printf "✓ Application server is running\n"
 
 # Run test file with Hurl
 run_hurl_test() {
@@ -166,6 +214,7 @@ printf "━━━━━━━━━━━━━━━━━━━━━━━━
 printf "Base URL: %s\n" "$BASE_URL"
 printf "Test Pattern: %s\n" "$TEST_PATTERN"
 printf "Testcontainers: %s\n" "$USE_TESTCONTAINERS"
+printf "Auto-start server: %s\n" "$START_SERVER"
 printf "Unique ID: %s\n" "$UNIQUE"
 printf "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
