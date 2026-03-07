@@ -108,7 +108,9 @@ let post = (deps: dependencies, ctx: astroContext): Promise.t<response> => {
           }
       }
     )
-  Promise.catch(handled, _ => Promise.resolve(makeResponse(~status=500, unexpectedError)))
+  Promise.catch(handled, _err => {
+    Promise.resolve(makeResponse(~status=500, unexpectedError))
+  })
 }
 
 let defaultDependencies: dependencies = {

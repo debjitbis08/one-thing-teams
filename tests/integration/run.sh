@@ -36,7 +36,7 @@ VERBOSE="${VERBOSE:-0}"
 UNIQUE=$(uuidgen 2>/dev/null | tr '[:upper:]' '[:lower:]' | tr -d '-' || date +%s)
 EMAIL="test_${UNIQUE}@example.com"
 USERNAME="test_${UNIQUE}"
-PASSWORD="Str0ngP@ssw0rd!${RANDOM}"
+PASSWORD="T3stPass_${RANDOM}_Secure"
 
 # Process management
 CONTAINER_SETUP_PID=""
@@ -46,8 +46,15 @@ SERVER_PID=""
 cleanup() {
   if [[ -n "$SERVER_PID" ]]; then
     printf "\nStopping app server (PID %s)...\n" "$SERVER_PID"
-    kill $SERVER_PID 2>/dev/null || true
+    # Kill the process group, then any remaining processes on the port
+    kill -- -$SERVER_PID 2>/dev/null || kill $SERVER_PID 2>/dev/null || true
     wait $SERVER_PID 2>/dev/null || true
+    # Clean up any orphaned processes still bound to the port
+    local port_pid
+    port_pid=$(lsof -ti :"$SERVER_PORT" 2>/dev/null || true)
+    if [[ -n "$port_pid" ]]; then
+      kill $port_pid 2>/dev/null || true
+    fi
   fi
 
   if [[ -n "$CONTAINER_SETUP_PID" ]]; then
@@ -129,11 +136,18 @@ fi
 if [[ "$START_SERVER" == "1" ]]; then
   printf "Starting app server on port %s...\n" "$SERVER_PORT"
 
+  # Ensure port is free
+  if lsof -ti :"$SERVER_PORT" > /dev/null 2>&1; then
+    echo "Error: Port $SERVER_PORT is already in use" >&2
+    lsof -i :"$SERVER_PORT" >&2
+    exit 1
+  fi
+
   # Ensure SESSION_JWT_SECRET is set for the test server
   export SESSION_JWT_SECRET="${SESSION_JWT_SECRET:-integration-test-jwt-secret-that-is-at-least-32-bytes-long}"
 
-  # Start Astro dev server in background
-  npx astro dev --port "$SERVER_PORT" > /tmp/test-server-$$.log 2>&1 &
+  # Start Astro dev server in its own process group for clean shutdown
+  setsid npx astro dev --port "$SERVER_PORT" > /tmp/test-server-$$.log 2>&1 &
   SERVER_PID=$!
 
   # Wait for server to be ready
@@ -186,7 +200,7 @@ run_hurl_test() {
   local test_unique=$(uuidgen 2>/dev/null | tr '[:upper:]' '[:lower:]' | tr -d '-' || echo "${UNIQUE}_$(date +%N)")
   local test_email="test_${test_unique}@example.com"
   local test_username="test_${test_unique}"
-  local test_password="Str0ngP@ssw0rd!${RANDOM}"
+  local test_password="T3stPass_${RANDOM}_Secure"
 
   local hurl_args=(
     --variable base_url="$BASE_URL"
@@ -202,6 +216,11 @@ run_hurl_test() {
 
   if ! hurl "${hurl_args[@]}" "$test_file"; then
     printf "\n✗ Test '%s' failed\n" "$test_name"
+    if [[ -f /tmp/test-server-$$.log ]]; then
+      printf "\n--- Server logs (last 20 lines) ---\n"
+      tail -20 /tmp/test-server-$$.log
+      printf "--- End server logs ---\n"
+    fi
     return 1
   fi
 

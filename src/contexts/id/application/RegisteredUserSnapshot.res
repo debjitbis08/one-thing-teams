@@ -16,14 +16,11 @@ type userSnapshot = {
 @genType
 type organizationSnapshot = {
   organizationId: string,
-  name: string,
-  shortCode: string,
-  ownerId: string,
 }
 
 @genType
 type membershipSnapshot = {
-  organization: organizationSnapshot,
+  organizationId: string,
   role: string,
 }
 
@@ -36,13 +33,21 @@ type passwordProviderSnapshot = {
 @genType
 type snapshot = {
   user: userSnapshot,
-  defaultOrganization: organizationSnapshot,
-  preferredOrganization: organizationSnapshot,
+  defaultOrganizationId: string,
+  preferredOrganizationId: string,
   memberships: array<membershipSnapshot>,
   passwordProvider: option<passwordProviderSnapshot>,
   isContributor: bool,
   createdAt: float,
   updatedAt: float,
+}
+
+@genType
+type orgDetails = {
+  organizationId: string,
+  name: string,
+  shortCode: string,
+  ownerId: string,
 }
 
 let userStatusToString = status =>
@@ -109,43 +114,45 @@ let userOfSnapshot = (snapshot: userSnapshot) =>
       }: D.user)
   }
 
-let organizationToSnapshot = (organization: Organization.t) => {
+let orgIdOfOrganization = (organization: Organization.t): string => {
   let OrganizationId.OrganizationId(orgUuid) = Organization.id(organization)
-  let UserId.UserId(ownerUuid) = Organization.owner(organization)
-  {
-    organizationId: UUIDv7.value(orgUuid),
-    name: Organization.nameValue(organization),
-    shortCode: Organization.shortCodeValue(organization),
-    ownerId: UUIDv7.value(ownerUuid),
-  }
+  UUIDv7.value(orgUuid)
 }
 
-let organizationOfSnapshot = (snapshot: organizationSnapshot) =>
-  switch (UUIDv7.ofString(snapshot.organizationId), UUIDv7.ofString(snapshot.ownerId)) {
-  | (Error(_), _) => None
-  | (_, Error(_)) => None
-  | (Ok(_orgUuid), Ok(ownerUuid)) =>
+let organizationOfDetails = (details: orgDetails): option<Organization.t> =>
+  switch UUIDv7.ofString(details.ownerId) {
+  | Error(_) => None
+  | Ok(ownerUuid) =>
       let owner = UserId.UserId(ownerUuid)
-      switch Organization.create(~name=snapshot.name, ~owner, ~id=?Some(snapshot.organizationId), ()) {
+      switch Organization.create(~name=details.name, ~owner, ~id=?Some(details.organizationId), ()) {
       | Error(_) => None
       | Ok(organization) => Some(organization)
       }
   }
 
+let findOrgDetails = (orgs: array<orgDetails>, orgId: string): option<orgDetails> =>
+  Array.getBy(orgs, o => o.organizationId == orgId)
+
 let membershipsToSnapshot = (memberships: list<D.membership>) =>
   memberships
   ->List.toArray
   ->Array.map(membership => {
-      organization: organizationToSnapshot(membership.organization),
+      organizationId: orgIdOfOrganization(membership.organization),
       role: roleToString(membership.role),
     })
 
-let membershipsOfSnapshot = (snapshots: array<membershipSnapshot>): option<list<D.membership>> =>
+let membershipsOfSnapshot = (
+  snapshots: array<membershipSnapshot>,
+  orgs: array<orgDetails>,
+): option<list<D.membership>> =>
   Array.reduceReverse(snapshots, Some(list{}), (acc, snapshot) =>
     switch acc {
     | None => None
     | Some(current) =>
-        switch (organizationOfSnapshot(snapshot.organization), roleOfString(snapshot.role)) {
+        switch (
+          findOrgDetails(orgs, snapshot.organizationId)->Option.flatMap(organizationOfDetails),
+          roleOfString(snapshot.role),
+        ) {
         | (Some(organization), Some(role)) =>
             let membership: D.membership = {organization, role}
             Some(List.add(current, membership))
@@ -175,14 +182,12 @@ let passwordProviderOfSnapshot = snapshot =>
 @genType
 let snapshotOfRegisteredUser = (registeredUser: D.registeredUser): snapshot => {
   let user = userToSnapshot(registeredUser.user)
-  let defaultOrganization = organizationToSnapshot(registeredUser.defaultOrganization)
-  let preferredOrganization = organizationToSnapshot(registeredUser.preferredOrganization)
   let memberships = membershipsToSnapshot(registeredUser.memberships)
   let passwordProvider = passwordProviderToSnapshot(registeredUser)
   {
     user,
-    defaultOrganization,
-    preferredOrganization,
+    defaultOrganizationId: orgIdOfOrganization(registeredUser.defaultOrganization),
+    preferredOrganizationId: orgIdOfOrganization(registeredUser.preferredOrganization),
     memberships,
     passwordProvider,
     isContributor: registeredUser.isContributor,
@@ -192,12 +197,20 @@ let snapshotOfRegisteredUser = (registeredUser: D.registeredUser): snapshot => {
 }
 
 @genType
-let registeredUserOfSnapshot = (snapshot: snapshot): option<D.registeredUser> =>
+let registeredUserOfSnapshot = (
+  snapshot: snapshot,
+  orgs: array<orgDetails>,
+): option<D.registeredUser> => {
+  let defaultOrg =
+    findOrgDetails(orgs, snapshot.defaultOrganizationId)->Option.flatMap(organizationOfDetails)
+  let preferredOrg =
+    findOrgDetails(orgs, snapshot.preferredOrganizationId)->Option.flatMap(organizationOfDetails)
+
   switch (
     userOfSnapshot(snapshot.user),
-    organizationOfSnapshot(snapshot.defaultOrganization),
-    organizationOfSnapshot(snapshot.preferredOrganization),
-    membershipsOfSnapshot(snapshot.memberships),
+    defaultOrg,
+    preferredOrg,
+    membershipsOfSnapshot(snapshot.memberships, orgs),
     passwordProviderOfSnapshot(snapshot.passwordProvider),
   ) {
   | (Some(user), Some(defaultOrganization), Some(preferredOrganization), Some(memberships), Some(authProviders)) =>
@@ -213,3 +226,4 @@ let registeredUserOfSnapshot = (snapshot: snapshot): option<D.registeredUser> =>
       }: D.registeredUser)
   | _ => None
   }
+}

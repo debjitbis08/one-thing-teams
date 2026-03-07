@@ -56,7 +56,7 @@ const addMembershipToUser = async (membership: MembershipAddition): Promise<void
 
   // Check if membership already exists
   const alreadyMember = snapshot.memberships.some(
-    m => m.organization.organizationId === membership.organizationId,
+    m => m.organizationId === membership.organizationId,
   );
   if (alreadyMember) return;
 
@@ -100,12 +100,7 @@ const addMembershipToUser = async (membership: MembershipAddition): Promise<void
     memberships: [
       ...snapshot.memberships,
       {
-        organization: {
-          organizationId: membership.organizationId,
-          name: membership.organizationName,
-          shortCode: "",
-          ownerId: "",
-        },
+        organizationId: membership.organizationId,
         role: membership.role,
       },
     ],

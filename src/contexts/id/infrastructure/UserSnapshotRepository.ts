@@ -5,6 +5,7 @@ import { snapshotOfRegisteredUser, registeredUserOfSnapshot } from "../applicati
 import type { snapshot as RegisteredUserSnapshot } from "../application/RegisteredUserSnapshot.gen";
 import { eventRepository } from "../../../infrastructure/db/EventRepository";
 import { db } from "../../../infrastructure/db/client";
+import { loadOrgDetailsByIds } from "./OrganizationAggregateLoader";
 
 const aggregateType = "identity.user" as const;
 
@@ -29,7 +30,7 @@ export const fetchRegisteredUserByIdentifier = async (identifier: string) => {
   const trimmed = identifier.trim();
   const emailCandidate = trimmed.toLowerCase();
 
-  // First find the aggregate_id matching the identifier
+  // Find the aggregate_id matching the identifier
   const idResult = await db.execute(sql<{
     aggregate_id: string;
   }>`
@@ -48,7 +49,7 @@ export const fetchRegisteredUserByIdentifier = async (identifier: string) => {
     return undefined;
   }
 
-  // Then get the latest snapshot for that specific aggregate
+  // Get the latest snapshot for that specific aggregate
   const result = await db.execute(sql<{
     state: RegisteredUserSnapshot;
   }>`
@@ -65,6 +66,16 @@ export const fetchRegisteredUserByIdentifier = async (identifier: string) => {
     return undefined;
   }
 
-  const registeredUser = registeredUserOfSnapshot(row.state);
+  // Collect all referenced org IDs from the snapshot
+  const orgIds = [
+    row.state.defaultOrganizationId,
+    row.state.preferredOrganizationId,
+    ...row.state.memberships.map(m => m.organizationId),
+  ];
+
+  // Resolve current org details from org aggregate events
+  const orgDetails = await loadOrgDetailsByIds(orgIds);
+
+  const registeredUser = registeredUserOfSnapshot(row.state, orgDetails);
   return registeredUser ?? undefined;
 };
