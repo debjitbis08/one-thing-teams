@@ -7,14 +7,6 @@ type score = {
   note: option<note>,
 }
 
-/* Optional "direct revenue" lens as % of baseline mapped to Fibonacci */
-type revenuePctBucket =
-  | Lt1Pct
-  | Pct1to3
-  | Pct3to8
-  | Pct8to20
-  | Gt20
-
 type organizationName = string
 
 type productId = ProductId(UUIDv7.t)
@@ -25,6 +17,7 @@ type product = {
   name: string,
   shortCode: ShortCode.t,
   description: option<string>,
+  breakEvenTarget: option<int>,
 }
 
 type cycleId = CycleId(UUIDv7.t)
@@ -50,35 +43,19 @@ type lifecycleStatus =
   | Done
   | Abandoned
 
-type initiativePriority = {
-  userValue: FibonacciScale.t,
-  timeCriticality: FibonacciScale.t,
-  riskReductionOrOpportunityEnablement: FibonacciScale.t,
-  effort: FibonacciScale.t,
-  isCore: bool,
-}
-
-type initiativeCod =
-    | DirectRevenue({ bucket: revenuePctBucket, note: option<note> })
-    | Proxy({
-        /* VALUE */
-        visionAlignment: score,        /* does this reinforce the core? */
-        frequency: score,              /* daily/weekly/rare usage */
-        retentionPotential: score,     /* will they return? */
-        differentiation: score,        /* pricing power / stand-out */
-
-        /* RISK */
-        complexityImpact: score,       /* inverse: higher = less added complexity */
-        futureLeverage: score,         /* unlocks future options / reduces uncertainty */
-
-        /* CRITICALITY */
-        timeCriticality: score,
+type initiativeScore =
+  | Proxy({
+      userValue: score,
+      timeCriticality: score,
+      riskReduction: score,
+      effort: score,
+      isCore: bool,
     })
-
-type initiativeScore = {
-    cod: initiativeCod,
-    effort: score
-}
+  | BreakEven({
+      contributionCount: float,
+      effort: score,
+      isCore: bool,
+    })
 
 type doneEvidence = option<string>
 
