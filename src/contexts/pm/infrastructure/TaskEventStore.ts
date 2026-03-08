@@ -6,6 +6,10 @@ const aggregateType = "pm.task" as const;
 const createdEventType = `${aggregateType}.created` as const;
 const scenarioAddedEventType = `${aggregateType}.scenario_added` as const;
 const scenarioRemovedEventType = `${aggregateType}.scenario_removed` as const;
+const statusUpdatedEventType = `${aggregateType}.status_updated` as const;
+const updatedEventType = `${aggregateType}.updated` as const;
+const assignedEventType = `${aggregateType}.assigned` as const;
+const unassignedEventType = `${aggregateType}.unassigned` as const;
 
 type ScenarioInput = {
   title: string;
@@ -128,5 +132,149 @@ export async function appendTaskCreatedEvent(input: CreatedEventInput): Promise<
       },
     ],
     expectedVersion: 0,
+  });
+}
+
+type StatusUpdatedEventInput = {
+  taskId: string;
+  organizationId: string;
+  status: string;
+  previousStatus: string;
+  updatedBy: string;
+  sessionId: string;
+  version: number;
+  expectedVersion: number;
+  occurredAt: Date;
+};
+
+export async function appendTaskStatusUpdatedEvent(input: StatusUpdatedEventInput): Promise<void> {
+  await eventRepository.append({
+    events: [
+      {
+        id: uuidv7(),
+        orgId: input.organizationId,
+        aggregateId: input.taskId,
+        aggregateType,
+        version: input.version,
+        type: statusUpdatedEventType,
+        data: {
+          taskId: input.taskId,
+          status: input.status,
+          previousStatus: input.previousStatus,
+          updatedBy: input.updatedBy,
+          occurredAt: input.occurredAt.toISOString(),
+        },
+        meta: { sessionId: input.sessionId },
+        createdAt: input.occurredAt,
+      },
+    ],
+    expectedVersion: input.expectedVersion,
+  });
+}
+
+type UpdatedEventInput = {
+  taskId: string;
+  organizationId: string;
+  title: string | undefined;
+  description: string | undefined;
+  updatedBy: string;
+  sessionId: string;
+  version: number;
+  expectedVersion: number;
+  occurredAt: Date;
+};
+
+export async function appendTaskUpdatedEvent(input: UpdatedEventInput): Promise<void> {
+  await eventRepository.append({
+    events: [
+      {
+        id: uuidv7(),
+        orgId: input.organizationId,
+        aggregateId: input.taskId,
+        aggregateType,
+        version: input.version,
+        type: updatedEventType,
+        data: {
+          taskId: input.taskId,
+          title: input.title ?? null,
+          description: input.description ?? null,
+          updatedBy: input.updatedBy,
+          occurredAt: input.occurredAt.toISOString(),
+        },
+        meta: { sessionId: input.sessionId },
+        createdAt: input.occurredAt,
+      },
+    ],
+    expectedVersion: input.expectedVersion,
+  });
+}
+
+type AssignedEventInput = {
+  taskId: string;
+  organizationId: string;
+  assigneeUserId: string;
+  assignedBy: string;
+  sessionId: string;
+  version: number;
+  expectedVersion: number;
+  occurredAt: Date;
+};
+
+export async function appendTaskAssignedEvent(input: AssignedEventInput): Promise<void> {
+  await eventRepository.append({
+    events: [
+      {
+        id: uuidv7(),
+        orgId: input.organizationId,
+        aggregateId: input.taskId,
+        aggregateType,
+        version: input.version,
+        type: assignedEventType,
+        data: {
+          taskId: input.taskId,
+          assigneeUserId: input.assigneeUserId,
+          assignedBy: input.assignedBy,
+          occurredAt: input.occurredAt.toISOString(),
+        },
+        meta: { sessionId: input.sessionId },
+        createdAt: input.occurredAt,
+      },
+    ],
+    expectedVersion: input.expectedVersion,
+  });
+}
+
+type UnassignedEventInput = {
+  taskId: string;
+  organizationId: string;
+  assigneeUserId: string;
+  unassignedBy: string;
+  sessionId: string;
+  version: number;
+  expectedVersion: number;
+  occurredAt: Date;
+};
+
+export async function appendTaskUnassignedEvent(input: UnassignedEventInput): Promise<void> {
+  await eventRepository.append({
+    events: [
+      {
+        id: uuidv7(),
+        orgId: input.organizationId,
+        aggregateId: input.taskId,
+        aggregateType,
+        version: input.version,
+        type: unassignedEventType,
+        data: {
+          taskId: input.taskId,
+          assigneeUserId: input.assigneeUserId,
+          unassignedBy: input.unassignedBy,
+          occurredAt: input.occurredAt.toISOString(),
+        },
+        meta: { sessionId: input.sessionId },
+        createdAt: input.occurredAt,
+      },
+    ],
+    expectedVersion: input.expectedVersion,
   });
 }
