@@ -119,49 +119,56 @@ let initiativeExists = (aggregate: option<aggregateData>) =>
     agg.events->Array.some(event => event.type_ == "pm.initiative.created")
   }
 
-@genType
-let execute = (deps: dependencies, command: command): Promise.t<result<unit, error>> => {
-  if !hasAllowedRole(command.session.roles) {
-    Promise.resolve(Error(#Forbidden))
+let authorize = (command: command) =>
+  if hasAllowedRole(command.session.roles) {
+    Ok(command)
   } else {
-    let validationResult = switch command.scoreType {
-    | "proxy" => validateProxy(command)
-    | "break_even" => validateBreakEven(command)
-    | _ => Error(#InvalidScoreType)
-    }
-
-    switch validationResult {
-    | Error(e) => Promise.resolve(Error(e))
-    | Ok() =>
-      deps.loadAggregate(command.initiativeId)->Promise.then(aggregateOpt => {
-        if !initiativeExists(aggregateOpt) {
-          Promise.resolve(Error(#InitiativeNotFound))
-        } else {
-          let currentVersion = switch aggregateOpt {
-          | Some(agg) => agg.version
-          | None => 0
-          }
-
-          let event: scoredEvent = {
-            initiativeId: command.initiativeId,
-            organizationId: command.session.organizationId,
-            scoreType: command.scoreType,
-            userValue: command.userValue,
-            timeCriticality: command.timeCriticality,
-            riskReduction: command.riskReduction,
-            effort: command.effort,
-            isCore: command.isCore,
-            contributionCount: command.contributionCount,
-            scoredBy: command.session.userId,
-            sessionId: command.session.sessionId,
-            expectedVersion: currentVersion,
-            version: currentVersion + 1,
-            occurredAt: deps.now(),
-          }
-
-          deps.appendEvent(event)->Promise.thenResolve(_ => Ok())
-        }
-      })
-    }
+    Error(#Forbidden)
   }
-}
+
+let validateScore = (command: command) =>
+  switch command.scoreType {
+  | "proxy" => validateProxy(command)
+  | "break_even" => validateBreakEven(command)
+  | _ => Error(#InvalidScoreType)
+  }
+
+let requireInitiative = (aggregateOpt: option<aggregateData>) =>
+  if initiativeExists(aggregateOpt) {
+    let version = switch aggregateOpt {
+    | Some(agg) => agg.version
+    | None => 0
+    }
+    Ok(version)
+  } else {
+    Error(#InitiativeNotFound)
+  }
+
+@genType
+let execute = (deps: dependencies, command: command): Promise.t<result<unit, error>> =>
+  authorize(command)
+  ->AsyncResult.fromResult
+  ->AsyncResult.flatMap(cmd => validateScore(cmd)->AsyncResult.fromResult)
+  ->AsyncResult.flatMap(_ =>
+    deps.loadAggregate(command.initiativeId)
+    ->Promise.thenResolve(requireInitiative)
+  )
+  ->AsyncResult.flatMap(currentVersion => {
+    let event: scoredEvent = {
+      initiativeId: command.initiativeId,
+      organizationId: command.session.organizationId,
+      scoreType: command.scoreType,
+      userValue: command.userValue,
+      timeCriticality: command.timeCriticality,
+      riskReduction: command.riskReduction,
+      effort: command.effort,
+      isCore: command.isCore,
+      contributionCount: command.contributionCount,
+      scoredBy: command.session.userId,
+      sessionId: command.session.sessionId,
+      expectedVersion: currentVersion,
+      version: currentVersion + 1,
+      occurredAt: deps.now(),
+    }
+    deps.appendEvent(event)->Promise.thenResolve(_ => Ok())
+  })

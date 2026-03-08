@@ -55,48 +55,50 @@ type error = [
   | #ProductNotFound
 ]
 
-@genType
-let execute = (deps: dependencies, command: command): Promise.t<result<createdResult, error>> => {
-  if !hasAllowedRole(command.session.roles) {
-    Promise.resolve(Error(#Forbidden))
+let authorize = (command: command) =>
+  if hasAllowedRole(command.session.roles) {
+    Ok(command)
   } else {
-    let timeBudget = switch command.timeBudget {
-    | Some(t) => t
-    | None => 0.0
-    }
+    Error(#Forbidden)
+  }
 
-    switch Initiative.validateCreate(~title=command.title, ~timeBudget) {
-    | Error(#InvalidTitle(t)) => Promise.resolve(Error(#InvalidTitle(t)))
-    | Error(#InvalidTimeBudget) => Promise.resolve(Error(#InvalidTimeBudget))
-    | Ok(_validTitle) =>
-      deps.productExists(command.productId)->Promise.then(exists =>
-        if !exists {
-          Promise.resolve(Error(#ProductNotFound))
-        } else {
-          let now = deps.now()
-          let initiativeId = UUIDv7.value(UUIDv7.gen())
-
-          let event: createdEvent = {
-            initiativeId,
-            productId: command.productId,
-            organizationId: command.session.organizationId,
-            title: Initiative.Title.value(_validTitle),
-            description: command.description,
-            timeBudget,
-            chatRoomLink: command.chatRoomLink,
-            createdBy: command.session.userId,
-            occurredAt: now,
-          }
-
-          deps.appendEvent(event)->Promise.thenResolve(_ =>
-            Ok({
-              initiativeId,
-              productId: command.productId,
-              title: event.title,
-            })
-          )
-        }
-      )
-    }
+let validate = (command: command) => {
+  let timeBudget = switch command.timeBudget {
+  | Some(t) => t
+  | None => 0.0
+  }
+  switch Initiative.validateCreate(~title=command.title, ~timeBudget) {
+  | Error(#InvalidTitle(t)) => Error(#InvalidTitle(t))
+  | Error(#InvalidTimeBudget) => Error(#InvalidTimeBudget)
+  | Ok(validTitle) => Ok((validTitle, timeBudget))
   }
 }
+
+@genType
+let execute = (deps: dependencies, command: command): Promise.t<result<createdResult, error>> =>
+  authorize(command)
+  ->AsyncResult.fromResult
+  ->AsyncResult.flatMap(cmd => validate(cmd)->AsyncResult.fromResult)
+  ->AsyncResult.flatMap(((validTitle, timeBudget)) =>
+    deps.productExists(command.productId)
+    ->Promise.thenResolve(exists =>
+      if exists { Ok((validTitle, timeBudget)) } else { Error(#ProductNotFound) }
+    )
+  )
+  ->AsyncResult.flatMap(((validTitle, timeBudget)) => {
+    let initiativeId = UUIDv7.value(UUIDv7.gen())
+    let event: createdEvent = {
+      initiativeId,
+      productId: command.productId,
+      organizationId: command.session.organizationId,
+      title: Initiative.Title.value(validTitle),
+      description: command.description,
+      timeBudget,
+      chatRoomLink: command.chatRoomLink,
+      createdBy: command.session.userId,
+      occurredAt: deps.now(),
+    }
+    deps.appendEvent(event)->Promise.thenResolve(_ =>
+      Ok({initiativeId, productId: command.productId, title: event.title})
+    )
+  })

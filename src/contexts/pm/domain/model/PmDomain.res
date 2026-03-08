@@ -118,7 +118,10 @@ type taskData = {
   assignees: RescriptCore.Set.t<UserId.userId>,
 }
 
+type scenarioId = ScenarioId(UUIDv7.t)
+
 type scenario = {
+  scenarioId: scenarioId,
   title: string,
   acceptanceCriteria: array<string>,
 }
