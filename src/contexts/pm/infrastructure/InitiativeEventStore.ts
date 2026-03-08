@@ -5,6 +5,8 @@ import { eventRepository } from "../../../infrastructure/db/EventRepository";
 const aggregateType = "pm.initiative" as const;
 const createdEventType = `${aggregateType}.created` as const;
 const scoredEventType = `${aggregateType}.scored` as const;
+const progressStatusUpdatedEventType = `${aggregateType}.progress_status_updated` as const;
+const lifecycleStatusUpdatedEventType = `${aggregateType}.lifecycle_status_updated` as const;
 
 type CreatedEventInput = {
   initiativeId: string;
@@ -104,5 +106,79 @@ export async function appendInitiativeCreatedEvent(input: CreatedEventInput): Pr
       },
     ],
     expectedVersion: 0,
+  });
+}
+
+type ProgressStatusUpdatedEventInput = {
+  initiativeId: string;
+  organizationId: string;
+  progressStatus: string;
+  updatedBy: string;
+  sessionId: string;
+  version: number;
+  expectedVersion: number;
+  occurredAt: Date;
+};
+
+export async function appendProgressStatusUpdatedEvent(input: ProgressStatusUpdatedEventInput): Promise<void> {
+  await eventRepository.append({
+    events: [
+      {
+        id: uuidv7(),
+        orgId: input.organizationId,
+        aggregateId: input.initiativeId,
+        aggregateType,
+        version: input.version,
+        type: progressStatusUpdatedEventType,
+        data: {
+          initiativeId: input.initiativeId,
+          progressStatus: input.progressStatus,
+          updatedBy: input.updatedBy,
+          occurredAt: input.occurredAt.toISOString(),
+        },
+        meta: { sessionId: input.sessionId },
+        createdAt: input.occurredAt,
+      },
+    ],
+    expectedVersion: input.expectedVersion,
+  });
+}
+
+type LifecycleStatusUpdatedEventInput = {
+  initiativeId: string;
+  organizationId: string;
+  lifecycleStatus: string;
+  doneEvidence: string | undefined;
+  outcomeNotes: string | undefined;
+  updatedBy: string;
+  sessionId: string;
+  version: number;
+  expectedVersion: number;
+  occurredAt: Date;
+};
+
+export async function appendLifecycleStatusUpdatedEvent(input: LifecycleStatusUpdatedEventInput): Promise<void> {
+  await eventRepository.append({
+    events: [
+      {
+        id: uuidv7(),
+        orgId: input.organizationId,
+        aggregateId: input.initiativeId,
+        aggregateType,
+        version: input.version,
+        type: lifecycleStatusUpdatedEventType,
+        data: {
+          initiativeId: input.initiativeId,
+          lifecycleStatus: input.lifecycleStatus,
+          doneEvidence: input.doneEvidence ?? null,
+          outcomeNotes: input.outcomeNotes ?? null,
+          updatedBy: input.updatedBy,
+          occurredAt: input.occurredAt.toISOString(),
+        },
+        meta: { sessionId: input.sessionId },
+        createdAt: input.occurredAt,
+      },
+    ],
+    expectedVersion: input.expectedVersion,
   });
 }
