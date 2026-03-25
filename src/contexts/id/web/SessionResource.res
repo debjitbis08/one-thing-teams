@@ -4,7 +4,6 @@ module String = RescriptCore.String
 module Array = Belt.Array
 
 module D = IdDomain
-module LoginWithPassword = LoginWithPassword
 
 type loginRequest = {
   usernameOrEmail: string,

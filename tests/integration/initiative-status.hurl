@@ -1,6 +1,6 @@
 # ============================================================
 # Initiative Status Integration Tests
-# (progress status & lifecycle status)
+# (progress status & lifecycle status with structured evidence)
 # ============================================================
 
 # ------------------------------------------------------------
@@ -172,7 +172,23 @@ HTTP/1.1 200
 jsonpath "$.success" == true
 
 # ------------------------------------------------------------
-# 9. Update lifecycle status: done with evidence
+# 9. Done WITHOUT evidence → blocked (400)
+# ------------------------------------------------------------
+
+PATCH {{base_url}}/api/initiatives/{{initiative_id}}/lifecycle-status
+Content-Type: application/json
+Cookie: sessionToken={{owner_session_token}}
+
+{
+  "lifecycleStatus": "done"
+}
+
+HTTP/1.1 400
+[Asserts]
+jsonpath "$.error" exists
+
+# ------------------------------------------------------------
+# 10. Done with empty evidence array → blocked (400)
 # ------------------------------------------------------------
 
 PATCH {{base_url}}/api/initiatives/{{initiative_id}}/lifecycle-status
@@ -181,7 +197,26 @@ Cookie: sessionToken={{owner_session_token}}
 
 {
   "lifecycleStatus": "done",
-  "doneEvidence": "All tasks completed and deployed",
+  "evidence": []
+}
+
+HTTP/1.1 400
+[Asserts]
+jsonpath "$.error" exists
+
+# ------------------------------------------------------------
+# 11. Done with live_url evidence → success
+# ------------------------------------------------------------
+
+PATCH {{base_url}}/api/initiatives/{{initiative_id}}/lifecycle-status
+Content-Type: application/json
+Cookie: sessionToken={{owner_session_token}}
+
+{
+  "lifecycleStatus": "done",
+  "evidence": [
+    { "kind": "live_url", "url": "https://app.example.com/feature" }
+  ],
   "outcomeNotes": "Delivered on time with positive user feedback"
 }
 
@@ -190,7 +225,208 @@ HTTP/1.1 200
 jsonpath "$.success" == true
 
 # ------------------------------------------------------------
-# 10. Invalid lifecycle status
+# 12. New initiative: done with tracking_event evidence
+# ------------------------------------------------------------
+
+POST {{base_url}}/api/initiatives
+Content-Type: application/json
+Cookie: sessionToken={{owner_session_token}}
+
+{
+  "productId": "{{product_id}}",
+  "title": "Tracking Evidence Initiative {{unique}}"
+}
+
+HTTP/1.1 201
+[Captures]
+tracking_initiative_id: jsonpath "$.initiativeId"
+
+PATCH {{base_url}}/api/initiatives/{{tracking_initiative_id}}/lifecycle-status
+Content-Type: application/json
+Cookie: sessionToken={{owner_session_token}}
+
+{
+  "lifecycleStatus": "done",
+  "evidence": [
+    { "kind": "tracking_event", "description": "user_signup event confirmed in analytics" }
+  ]
+}
+
+HTTP/1.1 200
+[Asserts]
+jsonpath "$.success" == true
+
+# ------------------------------------------------------------
+# 13. New initiative: done with screenshot evidence
+# ------------------------------------------------------------
+
+POST {{base_url}}/api/initiatives
+Content-Type: application/json
+Cookie: sessionToken={{owner_session_token}}
+
+{
+  "productId": "{{product_id}}",
+  "title": "Screenshot Evidence Initiative {{unique}}"
+}
+
+HTTP/1.1 201
+[Captures]
+screenshot_initiative_id: jsonpath "$.initiativeId"
+
+PATCH {{base_url}}/api/initiatives/{{screenshot_initiative_id}}/lifecycle-status
+Content-Type: application/json
+Cookie: sessionToken={{owner_session_token}}
+
+{
+  "lifecycleStatus": "done",
+  "evidence": [
+    { "kind": "screenshot", "url": "https://storage.example.com/screenshots/deploy-evidence.png" }
+  ]
+}
+
+HTTP/1.1 200
+[Asserts]
+jsonpath "$.success" == true
+
+# ------------------------------------------------------------
+# 14. New initiative: done with manual_sign_off (override)
+# ------------------------------------------------------------
+
+POST {{base_url}}/api/initiatives
+Content-Type: application/json
+Cookie: sessionToken={{owner_session_token}}
+
+{
+  "productId": "{{product_id}}",
+  "title": "Manual SignOff Initiative {{unique}}"
+}
+
+HTTP/1.1 201
+[Captures]
+signoff_initiative_id: jsonpath "$.initiativeId"
+
+PATCH {{base_url}}/api/initiatives/{{signoff_initiative_id}}/lifecycle-status
+Content-Type: application/json
+Cookie: sessionToken={{owner_session_token}}
+
+{
+  "lifecycleStatus": "done",
+  "evidence": [
+    { "kind": "manual_sign_off", "signedOffBy": "product-lead@example.com", "reason": "Validated deployment in staging with UX team" }
+  ]
+}
+
+HTTP/1.1 200
+[Asserts]
+jsonpath "$.success" == true
+
+# ------------------------------------------------------------
+# 15. Done with multiple evidence items
+# ------------------------------------------------------------
+
+POST {{base_url}}/api/initiatives
+Content-Type: application/json
+Cookie: sessionToken={{owner_session_token}}
+
+{
+  "productId": "{{product_id}}",
+  "title": "Multi Evidence Initiative {{unique}}"
+}
+
+HTTP/1.1 201
+[Captures]
+multi_initiative_id: jsonpath "$.initiativeId"
+
+PATCH {{base_url}}/api/initiatives/{{multi_initiative_id}}/lifecycle-status
+Content-Type: application/json
+Cookie: sessionToken={{owner_session_token}}
+
+{
+  "lifecycleStatus": "done",
+  "evidence": [
+    { "kind": "live_url", "url": "https://app.example.com/new-feature" },
+    { "kind": "tracking_event", "description": "feature_used event firing in production" },
+    { "kind": "screenshot", "url": "https://storage.example.com/screenshots/prod.png" }
+  ],
+  "outcomeNotes": "Feature launched with 3 types of validation"
+}
+
+HTTP/1.1 200
+[Asserts]
+jsonpath "$.success" == true
+
+# ------------------------------------------------------------
+# 16. Invalid evidence: live_url missing url field
+# ------------------------------------------------------------
+
+POST {{base_url}}/api/initiatives
+Content-Type: application/json
+Cookie: sessionToken={{owner_session_token}}
+
+{
+  "productId": "{{product_id}}",
+  "title": "Bad Evidence Initiative {{unique}}"
+}
+
+HTTP/1.1 201
+[Captures]
+bad_evidence_initiative_id: jsonpath "$.initiativeId"
+
+PATCH {{base_url}}/api/initiatives/{{bad_evidence_initiative_id}}/lifecycle-status
+Content-Type: application/json
+Cookie: sessionToken={{owner_session_token}}
+
+{
+  "lifecycleStatus": "done",
+  "evidence": [
+    { "kind": "live_url" }
+  ]
+}
+
+HTTP/1.1 400
+[Asserts]
+jsonpath "$.error" exists
+
+# ------------------------------------------------------------
+# 17. Invalid evidence: manual_sign_off missing reason
+# ------------------------------------------------------------
+
+PATCH {{base_url}}/api/initiatives/{{bad_evidence_initiative_id}}/lifecycle-status
+Content-Type: application/json
+Cookie: sessionToken={{owner_session_token}}
+
+{
+  "lifecycleStatus": "done",
+  "evidence": [
+    { "kind": "manual_sign_off", "signedOffBy": "someone@example.com" }
+  ]
+}
+
+HTTP/1.1 400
+[Asserts]
+jsonpath "$.error" exists
+
+# ------------------------------------------------------------
+# 18. Invalid evidence: unknown kind
+# ------------------------------------------------------------
+
+PATCH {{base_url}}/api/initiatives/{{bad_evidence_initiative_id}}/lifecycle-status
+Content-Type: application/json
+Cookie: sessionToken={{owner_session_token}}
+
+{
+  "lifecycleStatus": "done",
+  "evidence": [
+    { "kind": "email_confirmation", "description": "got an email" }
+  ]
+}
+
+HTTP/1.1 400
+[Asserts]
+jsonpath "$.error" exists
+
+# ------------------------------------------------------------
+# 19. Invalid lifecycle status
 # ------------------------------------------------------------
 
 PATCH {{base_url}}/api/initiatives/{{initiative_id}}/lifecycle-status
@@ -206,7 +442,7 @@ HTTP/1.1 400
 jsonpath "$.error" exists
 
 # ------------------------------------------------------------
-# 11. Lifecycle status without auth
+# 20. Lifecycle status without auth
 # ------------------------------------------------------------
 
 PATCH {{base_url}}/api/initiatives/{{initiative_id}}/lifecycle-status
@@ -221,7 +457,7 @@ HTTP/1.1 401
 jsonpath "$.error" exists
 
 # ------------------------------------------------------------
-# 12. Lifecycle status on non-existent initiative
+# 21. Lifecycle status on non-existent initiative
 # ------------------------------------------------------------
 
 PATCH {{base_url}}/api/initiatives/00000000-0000-0000-0000-000000000000/lifecycle-status
@@ -237,7 +473,7 @@ HTTP/1.1 404
 jsonpath "$.error" exists
 
 # ------------------------------------------------------------
-# 13. Update lifecycle to abandoned with outcome notes
+# 22. Abandoned with outcome notes (no evidence needed)
 # ------------------------------------------------------------
 
 POST {{base_url}}/api/initiatives
@@ -267,7 +503,22 @@ HTTP/1.1 200
 jsonpath "$.success" == true
 
 # ------------------------------------------------------------
-# 14. Missing progressStatus field
+# 23. Missing lifecycleStatus field
+# ------------------------------------------------------------
+
+PATCH {{base_url}}/api/initiatives/{{initiative_id}}/lifecycle-status
+Content-Type: application/json
+Cookie: sessionToken={{owner_session_token}}
+
+{
+}
+
+HTTP/1.1 400
+[Asserts]
+jsonpath "$.error" exists
+
+# ------------------------------------------------------------
+# 24. Missing progressStatus field
 # ------------------------------------------------------------
 
 PATCH {{base_url}}/api/initiatives/{{initiative_id}}/progress-status
@@ -282,14 +533,37 @@ HTTP/1.1 400
 jsonpath "$.error" exists
 
 # ------------------------------------------------------------
-# 15. Missing lifecycleStatus field
+# 25. Invalid evidence: tracking_event missing description
 # ------------------------------------------------------------
 
-PATCH {{base_url}}/api/initiatives/{{initiative_id}}/lifecycle-status
+PATCH {{base_url}}/api/initiatives/{{bad_evidence_initiative_id}}/lifecycle-status
 Content-Type: application/json
 Cookie: sessionToken={{owner_session_token}}
 
 {
+  "lifecycleStatus": "done",
+  "evidence": [
+    { "kind": "tracking_event" }
+  ]
+}
+
+HTTP/1.1 400
+[Asserts]
+jsonpath "$.error" exists
+
+# ------------------------------------------------------------
+# 26. Invalid evidence: screenshot missing url
+# ------------------------------------------------------------
+
+PATCH {{base_url}}/api/initiatives/{{bad_evidence_initiative_id}}/lifecycle-status
+Content-Type: application/json
+Cookie: sessionToken={{owner_session_token}}
+
+{
+  "lifecycleStatus": "done",
+  "evidence": [
+    { "kind": "screenshot" }
+  ]
 }
 
 HTTP/1.1 400

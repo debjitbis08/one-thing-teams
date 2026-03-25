@@ -2,7 +2,6 @@ module Dict = RescriptCore.Dict
 module JSON = RescriptCore.JSON
 module String = RescriptCore.String
 module Promise = RescriptCore.Promise
-module Fetch = Fetch
 
 let decodeStringField = (dict, key) =>
   switch Dict.get(dict, key) {

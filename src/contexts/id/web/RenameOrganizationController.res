@@ -2,11 +2,9 @@ module Dict = RescriptCore.Dict
 module JSON = RescriptCore.JSON
 module String = RescriptCore.String
 module Promise = RescriptCore.Promise
-module Fetch = Fetch
 module Array = Belt.Array
 module Option = Belt.Option
 module Encode = RescriptCore.JSON.Encode
-module RenameOrganization = RenameOrganization
 
 let hasAllowedRole = roles => roles->Array.some(role => role == "OWNER" || role == "ADMIN")
 

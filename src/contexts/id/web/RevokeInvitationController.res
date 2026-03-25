@@ -2,7 +2,6 @@ module JSON = RescriptCore.JSON
 module Promise = RescriptCore.Promise
 module Array = Belt.Array
 module Encode = RescriptCore.JSON.Encode
-module RevokeInvitation = RevokeInvitation
 
 let hasAllowedRole = roles => roles->Array.some(role => role == "OWNER" || role == "ADMIN")
 

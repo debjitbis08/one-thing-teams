@@ -1,0 +1,73 @@
+@import "tailwindcss";
+@import "@catppuccin/tailwindcss/mocha.css";
+
+/*
+ * Catppuccin Latte (light theme) colors.
+ * The mocha.css import provides dark theme colors and @theme tokens.
+ * We override the CSS custom properties for light mode.
+ */
+:root {
+  /* Latte palette — applied by default (light mode) */
+  --catppuccin-color-rosewater: #dc8a78;
+  --catppuccin-color-flamingo: #dd7878;
+  --catppuccin-color-pink: #ea76cb;
+  --catppuccin-color-mauve: #8839ef;
+  --catppuccin-color-red: #d20f39;
+  --catppuccin-color-maroon: #e64553;
+  --catppuccin-color-peach: #fe640b;
+  --catppuccin-color-yellow: #df8e1d;
+  --catppuccin-color-green: #40a02b;
+  --catppuccin-color-teal: #179299;
+  --catppuccin-color-sky: #04a5e5;
+  --catppuccin-color-sapphire: #209fb5;
+  --catppuccin-color-blue: #1e66f5;
+  --catppuccin-color-lavender: #7287fd;
+  --catppuccin-color-text: #4c4f69;
+  --catppuccin-color-subtext1: #5c5f77;
+  --catppuccin-color-subtext0: #6c6f85;
+  --catppuccin-color-overlay2: #7c7f93;
+  --catppuccin-color-overlay1: #8c8fa1;
+  --catppuccin-color-overlay0: #9ca0b0;
+  --catppuccin-color-surface2: #acb0be;
+  --catppuccin-color-surface1: #bcc0cc;
+  --catppuccin-color-surface0: #ccd0da;
+  --catppuccin-color-base: #eff1f5;
+  --catppuccin-color-mantle: #e6e9ef;
+  --catppuccin-color-crust: #dce0e8;
+}
+
+.dark {
+  /* Mocha palette — activated via .dark class */
+  --catppuccin-color-rosewater: #f5e0dc;
+  --catppuccin-color-flamingo: #f2cdcd;
+  --catppuccin-color-pink: #f5c2e7;
+  --catppuccin-color-mauve: #cba6f7;
+  --catppuccin-color-red: #f38ba8;
+  --catppuccin-color-maroon: #eba0ac;
+  --catppuccin-color-peach: #fab387;
+  --catppuccin-color-yellow: #f9e2af;
+  --catppuccin-color-green: #a6e3a1;
+  --catppuccin-color-teal: #94e2d5;
+  --catppuccin-color-sky: #89dceb;
+  --catppuccin-color-sapphire: #74c7ec;
+  --catppuccin-color-blue: #89b4fa;
+  --catppuccin-color-lavender: #b4befe;
+  --catppuccin-color-text: #cdd6f4;
+  --catppuccin-color-subtext1: #bac2de;
+  --catppuccin-color-subtext0: #a6adc8;
+  --catppuccin-color-overlay2: #9399b2;
+  --catppuccin-color-overlay1: #7f849c;
+  --catppuccin-color-overlay0: #6c7086;
+  --catppuccin-color-surface2: #585b70;
+  --catppuccin-color-surface1: #45475a;
+  --catppuccin-color-surface0: #313244;
+  --catppuccin-color-base: #1e1e2e;
+  --catppuccin-color-mantle: #181825;
+  --catppuccin-color-crust: #11111b;
+}
+
+/* Base body styling */
+body {
+  @apply bg-ctp-base text-ctp-text;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}

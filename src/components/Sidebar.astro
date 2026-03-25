@@ -1,0 +1,190 @@
+---
+import { Icon } from "astro-icon/components";
+import ThemeToggle from "./ThemeToggle.astro";
+
+interface Product {
+  productId: string;
+  name: string;
+  shortCode: string;
+}
+
+interface Props {
+  organizationName: string;
+  displayName: string;
+  email: string;
+  products: Product[];
+  currentProduct: Product | null;
+}
+
+const { organizationName, displayName, email, products, currentProduct } = Astro.props;
+
+const orgInitial = organizationName.charAt(0).toUpperCase();
+const userInitial = displayName.charAt(0).toUpperCase();
+---
+
+<aside class="flex flex-col w-64 h-screen bg-ctp-mantle border-r border-ctp-surface0 shrink-0">
+  <!-- Top switcher with dropdown -->
+  <div class="relative border-b border-ctp-surface0" x-data="{ open: false }">
+    <button
+      x-on:click="open = !open"
+      class="flex items-center gap-2.5 w-full px-4 py-3 text-ctp-text hover:bg-ctp-surface0/50 transition-colors text-sm"
+    >
+      <div class="size-6 rounded-md bg-ctp-mauve/15 flex items-center justify-center shrink-0">
+        <span class="text-xs font-bold text-ctp-mauve">{orgInitial}</span>
+      </div>
+      <div class="flex-1 min-w-0 text-left">
+        <p class="font-medium truncate leading-tight">{organizationName}</p>
+        {currentProduct && (
+          <p class="text-[11px] text-ctp-subtext0 truncate leading-tight">{currentProduct.name}</p>
+        )}
+      </div>
+      <Icon name="lucide:chevrons-up-down" class="size-4 text-ctp-overlay1 shrink-0" />
+    </button>
+
+    <!-- Dropdown menu -->
+    <div
+      x-show="open"
+      x-on:click.outside="open = false"
+      x-on:keydown.escape.window="open = false"
+      x-transition:enter="transition ease-out duration-100"
+      x-transition:enter-start="opacity-0 -translate-y-1"
+      x-transition:enter-end="opacity-100 translate-y-0"
+      x-transition:leave="transition ease-in duration-75"
+      x-transition:leave-start="opacity-100 translate-y-0"
+      x-transition:leave-end="opacity-0 -translate-y-1"
+      x-cloak
+      class="absolute left-2 right-2 top-full mt-1 z-50 rounded-lg bg-ctp-surface0 border border-ctp-surface1 shadow-lg shadow-ctp-crust/50 overflow-hidden max-h-[70vh] overflow-y-auto"
+    >
+      <!-- Product section -->
+      {products.length > 0 && (
+        <div>
+          <div class="flex items-center justify-between px-3 pt-2.5 pb-1">
+            <p class="text-[11px] font-semibold text-ctp-overlay0 uppercase tracking-wider">Product</p>
+          </div>
+          <div class="px-1.5 pb-1.5">
+            {products.map(product => (
+              <button
+                data-product-id={product.productId}
+                class:list={[
+                  "flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-md text-sm transition-colors",
+                  product.productId === currentProduct?.productId
+                    ? "bg-ctp-surface1 text-ctp-text font-medium"
+                    : "text-ctp-subtext1 hover:text-ctp-text hover:bg-ctp-surface1"
+                ]}
+                x-on:click={`document.cookie = 'selectedProductId=${product.productId};path=/;max-age=31536000'; window.location.reload(); open = false;`}
+              >
+                <Icon name="lucide:package" class="size-4 shrink-0" />
+                <span class="truncate">{product.name}</span>
+                {product.productId === currentProduct?.productId && (
+                  <Icon name="lucide:check" class="size-3.5 text-ctp-mauve ml-auto shrink-0" />
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div class="border-t border-ctp-surface1"></div>
+        </div>
+      )}
+
+      <!-- Organization section -->
+      <div class="px-3 pt-2.5 pb-1">
+        <p class="text-[11px] font-semibold text-ctp-overlay0 uppercase tracking-wider">Organization</p>
+      </div>
+      <div class="px-1.5 pb-1.5">
+        <div class="flex items-center gap-2.5 px-2.5 py-1.5 text-sm">
+          <div class="size-5 rounded bg-ctp-mauve/15 flex items-center justify-center shrink-0">
+            <span class="text-[10px] font-bold text-ctp-mauve">{orgInitial}</span>
+          </div>
+          <span class="text-ctp-text truncate">{organizationName}</span>
+        </div>
+        <a href="/app/invitations" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-ctp-subtext1 hover:text-ctp-text hover:bg-ctp-surface1 transition-colors text-sm" x-on:click="open = false">
+          <Icon name="lucide:user-plus" class="size-4 shrink-0" />
+          <span>Invite members</span>
+        </a>
+        <a href="/app/settings" class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-ctp-subtext1 hover:text-ctp-text hover:bg-ctp-surface1 transition-colors text-sm" x-on:click="open = false">
+          <Icon name="lucide:settings" class="size-4 shrink-0" />
+          <span>Organization settings</span>
+        </a>
+      </div>
+
+      <div class="border-t border-ctp-surface1"></div>
+
+      <!-- Account section -->
+      <div class="px-3 pt-2.5 pb-1">
+        <p class="text-[11px] font-semibold text-ctp-overlay0 uppercase tracking-wider">Account</p>
+      </div>
+      <div class="px-1.5 pb-2">
+        <div class="flex items-center gap-2.5 px-2.5 py-1.5 text-sm">
+          <div class="size-5 rounded-full bg-ctp-mauve/15 flex items-center justify-center shrink-0">
+            <span class="text-[10px] font-bold text-ctp-mauve">{userInitial}</span>
+          </div>
+          <div class="min-w-0">
+            <p class="text-ctp-text truncate">{displayName}</p>
+            <p class="text-[11px] text-ctp-subtext0 truncate">{email}</p>
+          </div>
+        </div>
+        <button
+          x-on:click="
+            fetch('/api/logout', { method: 'POST' })
+              .finally(() => { window.location.href = '/login'; });
+          "
+          class="flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-md text-ctp-subtext1 hover:text-ctp-red hover:bg-ctp-red/10 transition-colors text-sm"
+        >
+          <Icon name="lucide:log-out" class="size-4 shrink-0" />
+          <span>Log out</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="flex-1 overflow-y-auto p-3 space-y-1">
+    <a
+      href="/app"
+      class="flex items-center gap-3 px-3 py-2 rounded-lg text-ctp-subtext1 hover:text-ctp-text hover:bg-ctp-surface0 transition-colors text-sm"
+    >
+      <Icon name="lucide:layout-dashboard" class="size-4" />
+      <span>Dashboard</span>
+    </a>
+
+    <a
+      href="/app/products"
+      class="flex items-center gap-3 px-3 py-2 rounded-lg text-ctp-subtext1 hover:text-ctp-text hover:bg-ctp-surface0 transition-colors text-sm"
+    >
+      <Icon name="lucide:package" class="size-4" />
+      <span>Products</span>
+    </a>
+
+    <a
+      href="/app/initiatives"
+      class="flex items-center gap-3 px-3 py-2 rounded-lg text-ctp-subtext1 hover:text-ctp-text hover:bg-ctp-surface0 transition-colors text-sm"
+    >
+      <Icon name="lucide:rocket" class="size-4" />
+      <span>Initiatives</span>
+    </a>
+
+    <a
+      href="/app/tasks"
+      class="flex items-center gap-3 px-3 py-2 rounded-lg text-ctp-subtext1 hover:text-ctp-text hover:bg-ctp-surface0 transition-colors text-sm"
+    >
+      <Icon name="lucide:check-square" class="size-4" />
+      <span>Tasks</span>
+    </a>
+
+    <a
+      href="/app/team"
+      class="flex items-center gap-3 px-3 py-2 rounded-lg text-ctp-subtext1 hover:text-ctp-text hover:bg-ctp-surface0 transition-colors text-sm"
+    >
+      <Icon name="lucide:users" class="size-4" />
+      <span>Team</span>
+    </a>
+  </nav>
+
+  <!-- Bottom: Theme toggle -->
+  <div class="p-3 border-t border-ctp-surface0">
+    <div class="flex items-center justify-between px-3 py-1">
+      <span class="text-xs text-ctp-subtext0">Theme</span>
+      <ThemeToggle />
+    </div>
+  </div>
+</aside>

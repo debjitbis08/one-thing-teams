@@ -12,6 +12,7 @@ type CreatedEventInput = {
   initiativeId: string;
   productId: string;
   organizationId: string;
+  slug: string;
   title: string;
   description: string | undefined;
   timeBudget: number;
@@ -94,6 +95,7 @@ export async function appendInitiativeCreatedEvent(input: CreatedEventInput): Pr
           initiativeId: input.initiativeId,
           productId: input.productId,
           organizationId: input.organizationId,
+          slug: input.slug,
           title: input.title,
           description: input.description ?? null,
           timeBudget: input.timeBudget,
@@ -144,11 +146,19 @@ export async function appendProgressStatusUpdatedEvent(input: ProgressStatusUpda
   });
 }
 
+type EvidenceItem = {
+  kind: string;
+  url?: string;
+  description?: string;
+  signedOffBy?: string;
+  reason?: string;
+};
+
 type LifecycleStatusUpdatedEventInput = {
   initiativeId: string;
   organizationId: string;
   lifecycleStatus: string;
-  doneEvidence: string | undefined;
+  evidence: EvidenceItem[];
   outcomeNotes: string | undefined;
   updatedBy: string;
   sessionId: string;
@@ -170,7 +180,7 @@ export async function appendLifecycleStatusUpdatedEvent(input: LifecycleStatusUp
         data: {
           initiativeId: input.initiativeId,
           lifecycleStatus: input.lifecycleStatus,
-          doneEvidence: input.doneEvidence ?? null,
+          evidence: input.evidence,
           outcomeNotes: input.outcomeNotes ?? null,
           updatedBy: input.updatedBy,
           occurredAt: input.occurredAt.toISOString(),

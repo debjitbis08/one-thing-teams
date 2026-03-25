@@ -2,7 +2,6 @@ module Dict = RescriptCore.Dict
 module JSON = RescriptCore.JSON
 module Promise = RescriptCore.Promise
 module Encode = RescriptCore.JSON.Encode
-module CreateInitiative = CreateInitiative
 
 type session = CreateInitiative.session
 
@@ -49,6 +48,7 @@ let encodeSuccess = (result: CreateInitiative.createdResult) => {
   let dict = Dict.make()
   dict->Dict.set("initiativeId", Encode.string(result.initiativeId))
   dict->Dict.set("productId", Encode.string(result.productId))
+  dict->Dict.set("slug", Encode.string(result.slug))
   dict->Dict.set("title", Encode.string(result.title))
   Encode.object(dict)
 }
@@ -87,6 +87,8 @@ let post = (deps: dependencies, ctx: astroContext): Promise.t<response> => {
               Promise.resolve(errorResponse(SystemError.validation("Invalid initiative title: " ++ t)))
             | Error(#InvalidTimeBudget) =>
               Promise.resolve(errorResponse(SystemError.validation("Time budget must be non-negative")))
+            | Error(#InvalidSlug(s)) =>
+              Promise.resolve(errorResponse(SystemError.validation("Cannot generate slug from title: " ++ s)))
             | Error(#ProductNotFound) =>
               Promise.resolve(errorResponse(SystemError.notFound("Product not found")))
             }

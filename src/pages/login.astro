@@ -1,0 +1,89 @@
+---
+import AuthLayout from "../layouts/AuthLayout.astro";
+import { Icon } from "astro-icon/components";
+
+export const prerender = false;
+---
+
+<AuthLayout title="Login">
+  <div class="space-y-8">
+    <!-- Logo / Header -->
+    <div class="text-center">
+      <div class="inline-flex items-center justify-center size-12 rounded-xl bg-ctp-mauve/10 mb-4">
+        <Icon name="lucide:target" class="size-6 text-ctp-mauve" />
+      </div>
+      <h1 class="text-2xl font-bold text-ctp-text">Welcome back</h1>
+      <p class="mt-1 text-sm text-ctp-subtext0">Sign in to OneThing for Teams</p>
+    </div>
+
+    <!-- Login form -->
+    <form
+      x-data="{ loading: false, error: '' }"
+      x-on:submit.prevent="
+        loading = true;
+        error = '';
+        const form = $el;
+        const data = Object.fromEntries(new FormData(form));
+        fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ usernameOrEmail: data.usernameOrEmail, password: data.password }),
+        })
+          .then(r => r.json().then(body => ({ ok: r.ok, body })))
+          .then(({ ok, body }) => {
+            if (ok) {
+              window.location.href = '/app';
+            } else {
+              error = body.error || 'Login failed';
+            }
+          })
+          .catch(() => { error = 'Network error'; })
+          .finally(() => { loading = false; });
+      "
+      class="space-y-4"
+    >
+      <!-- Error message -->
+      <div x-show="error" x-cloak class="p-3 rounded-lg bg-ctp-red/10 text-ctp-red text-sm" x-text="error"></div>
+
+      <div>
+        <label for="usernameOrEmail" class="block text-sm font-medium text-ctp-subtext1 mb-1.5">Username or email</label>
+        <input
+          type="text"
+          id="usernameOrEmail"
+          name="usernameOrEmail"
+          required
+          autocomplete="username"
+          class="w-full px-3 py-2 rounded-lg border border-ctp-surface1 bg-ctp-surface0 text-ctp-text placeholder-ctp-overlay0 focus:outline-none focus:ring-2 focus:ring-ctp-mauve focus:border-transparent text-sm"
+          placeholder="you@example.com"
+        />
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-ctp-subtext1 mb-1.5">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          required
+          autocomplete="current-password"
+          class="w-full px-3 py-2 rounded-lg border border-ctp-surface1 bg-ctp-surface0 text-ctp-text placeholder-ctp-overlay0 focus:outline-none focus:ring-2 focus:ring-ctp-mauve focus:border-transparent text-sm"
+          placeholder="••••••••"
+        />
+      </div>
+
+      <button
+        type="submit"
+        x-bind:disabled="loading"
+        class="w-full py-2.5 rounded-lg bg-ctp-mauve text-ctp-base font-medium text-sm hover:bg-ctp-mauve/90 focus:outline-none focus:ring-2 focus:ring-ctp-mauve focus:ring-offset-2 focus:ring-offset-ctp-base disabled:opacity-50 transition-colors"
+      >
+        <span x-show="!loading">Sign in</span>
+        <span x-show="loading" x-cloak>Signing in...</span>
+      </button>
+    </form>
+
+    <p class="text-center text-sm text-ctp-subtext0">
+      Don't have an account?
+      <a href="/register" class="text-ctp-mauve hover:text-ctp-mauve/80 font-medium">Sign up</a>
+    </p>
+  </div>
+</AuthLayout>

@@ -35,6 +35,35 @@ let decodeOptionalStringField = (dict, key) =>
   | None => None
   }
 
+let decodeEvidenceItem = (json: JSON.t): option<UpdateLifecycleStatus.evidenceItem> =>
+  switch JSON.Decode.object(json) {
+  | None => None
+  | Some(dict) =>
+    switch decodeStringField(dict, "kind") {
+    | None => None
+    | Some(kind) =>
+      Some({
+        kind,
+        url: decodeOptionalStringField(dict, "url"),
+        description: decodeOptionalStringField(dict, "description"),
+        signedOffBy: decodeOptionalStringField(dict, "signedOffBy"),
+        reason: decodeOptionalStringField(dict, "reason"),
+      })
+    }
+  }
+
+let decodeEvidenceArray = (dict: Dict.t<JSON.t>): option<array<UpdateLifecycleStatus.evidenceItem>> =>
+  switch Dict.get(dict, "evidence") {
+  | None => None
+  | Some(value) =>
+    switch JSON.Decode.array(value) {
+    | None => None
+    | Some(arr) =>
+      let items = arr->Belt.Array.keepMap(decodeEvidenceItem)
+      Some(items)
+    }
+  }
+
 // --- Update Progress Status ---
 
 type progressDependencies = {
@@ -147,13 +176,13 @@ let patchLifecycle = (
             errorResponse(SystemError.validation("Field 'lifecycleStatus' is required")),
           )
         | Some(lifecycleStatus) =>
-          let doneEvidence = decodeOptionalStringField(dict, "doneEvidence")
+          let evidence = decodeEvidenceArray(dict)
           let outcomeNotes = decodeOptionalStringField(dict, "outcomeNotes")
           let command: UpdateLifecycleStatus.command = {
             session,
             initiativeId: ctx.initiativeId,
             lifecycleStatus,
-            doneEvidence,
+            evidence,
             outcomeNotes,
           }
           let appDeps: UpdateLifecycleStatus.dependencies = {
@@ -179,6 +208,16 @@ let patchLifecycle = (
                   ),
                 ),
               )
+            | Error(#DoneEvidenceRequired) =>
+              Promise.resolve(
+                errorResponse(
+                  SystemError.validation(
+                    "Evidence is required to mark an initiative as done. Provide at least one evidence item (live_url, tracking_event, screenshot, or manual_sign_off)",
+                  ),
+                ),
+              )
+            | Error(#InvalidEvidence(msg)) =>
+              Promise.resolve(errorResponse(SystemError.validation(msg)))
             }
           )
         }

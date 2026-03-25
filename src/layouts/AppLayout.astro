@@ -1,0 +1,56 @@
+---
+import BaseHead from "./BaseHead.astro";
+import Sidebar from "../components/Sidebar.astro";
+import "../styles/app.css";
+import { getSessionProfile } from "../contexts/id/infrastructure/read/SessionProfileRepository";
+import { listProductsForOrg } from "../contexts/pm/infrastructure/read/ProductReadRepository";
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+
+const session = Astro.locals.session;
+const profile = session
+  ? await getSessionProfile(session.userId, session.organizationId)
+  : null;
+
+const products = session
+  ? await listProductsForOrg(session.organizationId)
+  : [];
+
+// Determine selected product from cookie, fallback to first product
+const selectedProductId = Astro.cookies.get("selectedProductId")?.value;
+const currentProduct = products.find(p => p.productId === selectedProductId) ?? products[0] ?? null;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={title} />
+  </head>
+  <body class="min-h-screen bg-ctp-base">
+    <div class="flex h-screen overflow-hidden">
+      <!-- Sidebar -->
+      <Sidebar
+        organizationName={profile?.organizationName ?? "Organization"}
+        displayName={profile?.displayName ?? "User"}
+        email={profile?.email ?? ""}
+        products={products}
+        currentProduct={currentProduct}
+      />
+
+      <!-- Main content area -->
+      <div class="flex flex-1 overflow-hidden">
+        <!-- Primary content -->
+        <main class="flex-1 overflow-y-auto p-6">
+          <slot />
+        </main>
+
+        <!-- Optional right panel -->
+        <slot name="right-panel" />
+      </div>
+    </div>
+  </body>
+</html>

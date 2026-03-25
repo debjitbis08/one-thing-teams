@@ -1,0 +1,21 @@
+---
+import { Icon } from "astro-icon/components";
+---
+
+<button
+  x-data="{ dark: document.documentElement.classList.contains('dark') }"
+  x-on:click="
+    dark = !dark;
+    document.documentElement.classList.toggle('dark', dark);
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+  "
+  class="p-2 rounded-lg text-ctp-subtext0 hover:text-ctp-text hover:bg-ctp-surface0 transition-colors"
+  aria-label="Toggle theme"
+>
+  <span x-show="dark">
+    <Icon name="lucide:sun" class="size-5" />
+  </span>
+  <span x-show="!dark" x-cloak>
+    <Icon name="lucide:moon" class="size-5" />
+  </span>
+</button>

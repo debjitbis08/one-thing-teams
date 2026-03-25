@@ -1,0 +1,33 @@
+---
+import AppLayout from "../../../layouts/AppLayout.astro";
+import InitiativesPage from "../../../components/solid/InitiativesPage";
+import { listProductsForOrg } from "../../../contexts/pm/infrastructure/read/ProductReadRepository";
+import { listInitiativesForProduct } from "../../../contexts/pm/infrastructure/read/InitiativeReadRepository";
+
+export const prerender = false;
+
+if (!Astro.locals.session) {
+  return Astro.redirect("/login");
+}
+
+const session = Astro.locals.session;
+const products = await listProductsForOrg(session.organizationId);
+
+if (products.length === 0) {
+  return Astro.redirect("/app/onboarding");
+}
+
+const selectedProductId = Astro.cookies.get("selectedProductId")?.value;
+const currentProduct = products.find(p => p.productId === selectedProductId) ?? products[0];
+const initiatives = currentProduct
+  ? await listInitiativesForProduct(session.organizationId, currentProduct.productId)
+  : [];
+---
+
+<AppLayout title="Initiatives">
+  <InitiativesPage
+    client:load
+    initiatives={initiatives}
+    currentProduct={{ productId: currentProduct.productId, name: currentProduct.name }}
+  />
+</AppLayout>

@@ -37,7 +37,9 @@ describe("Initiative.Title", () => {
 describe("Initiative.validateCreate", () => {
   test("succeeds with valid title and zero time budget", () => {
     switch Initiative.validateCreate(~title="My Initiative", ~timeBudget=0.0) {
-    | Ok(title) => equal(Initiative.Title.value(title), "My Initiative")
+    | Ok({title, slug}) =>
+      equal(Initiative.Title.value(title), "My Initiative")
+      equal(Slug.value(slug), "my-initiative")
     | Error(_) => ok(false)
     }
   })

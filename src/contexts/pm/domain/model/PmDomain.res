@@ -57,13 +57,20 @@ type initiativeScore =
       isCore: bool,
     })
 
-type doneEvidence = option<string>
+type doneEvidenceItem =
+  | LiveUrl(string)
+  | TrackingEvent(string)
+  | Screenshot(string)
+  | ManualSignOff({signedOffBy: string, reason: string})
+
+type doneEvidence = array<doneEvidenceItem>
 
 type initiativeId = InitiativeId(UUIDv7.t)
 type initiative = {
   initiativeId: initiativeId,
   productId: productId,
   cycleId: option<cycleId>,
+  slug: string,
   title: string,
   description: option<string>,
   timeBudget: float,

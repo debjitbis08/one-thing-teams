@@ -2,7 +2,6 @@ module Dict = RescriptCore.Dict
 module JSON = RescriptCore.JSON
 module Promise = RescriptCore.Promise
 module Encode = RescriptCore.JSON.Encode
-module CreateTask = CreateTask
 
 type session = CreateTask.session
 

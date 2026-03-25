@@ -1,7 +1,6 @@
 module Array = Belt.Array
 module List = Belt.List
 
-module SessionResource = SessionResource
 
 @module("../infrastructure/SessionTokenService")
 external issueSessionTokens: SessionResource.sessionTokenInput => Promise.t<SessionResource.issuedTokens> = "issueSessionTokens"
